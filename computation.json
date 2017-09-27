@@ -1,0 +1,46 @@
+{
+
+
+
+"meta": {
+  "name": "VBM",
+  "version":  "v1.0",
+  "repository": "github.com/user/computation.git",
+  "description": "This algorithm runs the Voxel Based Morphometry on structural T1 weighted MRI scans using SPMv12 and MATLAB Runtimev713. Each scan output takes approximately 10 mins to run on a system with 2.3 GHz,i5 equivalent processor, 8GB RAM. Each scan takes about 150MB space after running this algorithm. Please make sure to have the space and resources to run this algorithm accordingly. Please read the contents of outputs_description.txt file to learn about the outputs",
+  "preprocess": true
+},
+
+
+"computation": {
+  "type": "docker",
+  "docker_image": "vbmv1.0",
+  "docker_name": "spanta28/vbm_nipype_v1.0",
+  "command": "python3 /root/vbm_scripts/run_vbm_bids.py"
+  },
+  
+  
+  
+  "input": {
+  
+  "input_bids_dir": {
+      "type": "string"
+    },
+    
+    "temp_write_dir": {
+      "type": "string"
+    }
+    
+  },
+  
+  
+  "output": {
+    
+    "success": {
+    "type": "boolean"
+  }
+  
+  }
+  
+  
+  
+}
