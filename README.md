@@ -7,4 +7,4 @@ Example run below:
 
 python3 /root/vbm_scripts/run_vbm_bids.py '{"input_bids_dir":"/root/data/bids_input","temp_write_dir":"/root/coinstac/tmp/"}'
 
-At the end of the computation , the output is written to stdout in json with the property "success" set to true/false indicating that the algorithm ran successfully/failed
+At the end of the computation , the output is written to stdout in json with the property "success" set to true/false indicating whether the algorithm ran successfully or failed
