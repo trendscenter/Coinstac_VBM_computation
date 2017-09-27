@@ -112,8 +112,8 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
                     for c in glob.glob(os.getcwd() + '/crash*'): os.remove(c)
                     for f in glob.glob(os.getcwd() + '/tmp*'): shutil.rmtree(f, ignore_errors=True)
                     for f in glob.glob(os.getcwd() + '/__pycache__'): shutil.rmtree(f, ignore_errors=True)
-                    shutil.rmtree(os.getcwd() +'/vbm_preprocess', ignore_errors=True)
-                    os.remove(os.getcwd() + '/pyscript.m')
+                    if os.path.exists(os.getcwd() +'/vbm_preprocess'): shutil.rmtree(os.getcwd() +'/vbm_preprocess', ignore_errors=True)
+                    if os.path.exists(os.getcwd() + '/pyscript.m'): os.remove(os.getcwd() + '/pyscript.m')
 
                     # Pipeline execution starts here..
 
@@ -156,8 +156,8 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
                     for c in glob.glob(os.getcwd() + '/crash*'): os.remove(c)
                     for f in glob.glob(os.getcwd() + '/tmp*'): shutil.rmtree(f, ignore_errors=True)
                     for f in glob.glob(os.getcwd() + '/__pycache__'): shutil.rmtree(f, ignore_errors=True)
-                    shutil.rmtree(os.getcwd() +'/vbm_preprocess', ignore_errors=True)
-                    os.remove(os.getcwd() +'/pyscript.m')
+                    if os.path.exists(os.getcwd() +'/vbm_preprocess'): shutil.rmtree(os.getcwd() +'/vbm_preprocess', ignore_errors=True)
+                    if os.path.exists(os.getcwd() + '/pyscript.m'): os.remove(os.getcwd() +'/pyscript.m')
 
                     # On the last subject in the BIDS directory , write the success status output to json object
                     if gz==smri_data[-1]:
