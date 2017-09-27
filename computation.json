@@ -14,7 +14,7 @@
 "computation": {
   "type": "docker",
   "docker_image": "vbmv1.0",
-  "docker_name": "spanta28/coinstac_vbm_v1.0",
+  "docker_name": "spanta28/coinstac",
   "command": "python3 /root/vbm_scripts/run_vbm_bids.py"
   },
   
