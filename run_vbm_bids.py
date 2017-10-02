@@ -33,7 +33,8 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
         smri_data = glob.glob(input_bids_dir + '/sub*/*/*T1w*.nii.gz')
 
         # Loop through each of the T1w*.nii.gz file to run the algorithm, this algorithm runs serially
-        i=0
+        i=0 #variable for looping
+        count_success=0 # variable for counting how many subjects were successfully run
         while i<len(smri_data):
             gz=smri_data[i]
             i=i+1
@@ -148,7 +149,7 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
 
             else:
                     # If succeeds, set status True
-                    status = True
+                    count_success = count_success+1
 
             finally:
                     # Remove any tmp files in the docker
@@ -157,10 +158,11 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
                     for f in glob.glob(os.getcwd() + '/tmp*'): shutil.rmtree(f, ignore_errors=True)
                     for f in glob.glob(os.getcwd() + '/__pycache__'): shutil.rmtree(f, ignore_errors=True)
                     if os.path.exists(os.getcwd() +'/vbm_preprocess'): shutil.rmtree(os.getcwd() +'/vbm_preprocess', ignore_errors=True)
-                    if os.path.exists(os.getcwd() + '/pyscript.m'): os.remove(os.getcwd() +'/pyscript.m')
+                    if os.path.exists(os.getcwd() + '/pyscript.m'): os.remove(os.getcwd() + '/pyscript.m')
 
                     # On the last subject in the BIDS directory , write the success status output to json object
                     if gz==smri_data[-1]:
+                        if count_success>0: status=True
                         sys.stdout.write(json.dumps({'success': status}, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
