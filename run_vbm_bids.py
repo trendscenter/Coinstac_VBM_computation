@@ -148,7 +148,7 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
                     continue
 
             else:
-                    # If succeeds, set status True
+                    # If the try block succeeds, increase the count
                     count_success = count_success+1
 
             finally:
