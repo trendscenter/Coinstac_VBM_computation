@@ -162,7 +162,7 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
 
                     # On the last subject in the BIDS directory , write the success status output to json object
                     if gz==smri_data[-1]:
-                        if count_success>0: status=True
+                        if count_success>0: status=True # If atleast 1 scan in the BIDS directory finishes successfully 
                         sys.stdout.write(json.dumps({'success': status}, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
