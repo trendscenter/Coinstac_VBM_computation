@@ -5,6 +5,6 @@ The computation runs serially and each scan takes approximately 10 mins to run o
 
 Example run below:
 
-python3 /root/vbm_scripts/run_vbm_bids.py '{"input_bids_dir":"/root/data/bids_input","temp_write_dir":"/root/coinstac/tmp/"}'
+python3 /root/vbm_scripts/run_vbm_bids.py '{"input_bids_dir":"/root/vbm_scripts/test_bids_input_data/","temp_write_dir":"/root/vbm_scripts/test_output/"}'
 
 At the end of the computation , the output is written to stdout in json with the property "success" set to true/false indicating whether the algorithm ran successfully or failed
