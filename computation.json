@@ -12,20 +12,22 @@
     "docker_name": "spanta28/coinstac",
     "command": "python3 /root/vbm_scripts/run_vbm_bids.py",
     "input": {
-      "smoothingValue":{
+      "SmoothingValue":{
         "label": "Smoothing kernel value(mm)",
         "min": 3,
         "max": 3,
         "type": "array",
         "items": "number",
         "defaultValue": [10, 10, 10],
-        "description": "Enter the full-width at half maximum (FWHM) of the Gaussian smoothing kernel in mm, Three values should be entered, denoting the FWHM in the x,y and z directions. Default:[10 10 10]" 
+        "description": "This is Optional setting. Enter the full-width at half maximum (FWHM) of the Gaussian smoothing kernel in mm, Three values should be entered, denoting the FWHM in the x,y and z directions. Default:[10 10 10]" 
       },
       "input_bids_dir": {
         "type": "directory"
+        "label": "Input Bids Directory",
       },
       "temp_write_dir": {
         "type": "directory"
+        "label": "Directory to save outputs",
       } 
     },
     "output": {
