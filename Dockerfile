@@ -47,3 +47,8 @@ ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
     SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \
     FORCE_SPMMCR=1 \
     LD_LIBRARY_PATH=/opt/mcr/v*/runtime/glnxa64:/opt/mcr/v*/bin/glnxa64:/opt/mcr/v*/sys/os/glnxa64:$LD_LIBRARY_PATH
+    
+# Install Bids Validator using npm
+RUN curl -sL https://rpm.nodesource.com/setup_6.x | bash - \
+    && yum install -y nodejs \
+    && npm install -g bids-validator
