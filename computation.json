@@ -1,6 +1,6 @@
 {
-  "id": "vbm-preprocess-coinstac-01",
   "meta": {
+    "id": "vbm-preprocess-coinstac-01",
     "name": "VBM",
     "version":  "v1.0",
     "repository": "github.com/MRN-Code/Coinstac_VBM_computation.git",
