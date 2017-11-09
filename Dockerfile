@@ -1,5 +1,8 @@
 FROM centos:7
 
+WORKDIR /computation
+ADD . /computation
+
 #----------------------------
 # Install common dependencies
 #----------------------------
