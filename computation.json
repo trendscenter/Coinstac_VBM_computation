@@ -11,7 +11,7 @@
   "computation": {
     "type": "docker",
     "dockerImage": "spanta28/coinstac:vbm_computation",
-    "command": ["python3", "/root/vbm_scripts/run_vbm_bids.py"],
+    "command": ["python3", "/computation/run_vbm_bids.py"],
     "input": {
       "SmoothingValue":{
         "label": "Smoothing kernel value(mm)",
