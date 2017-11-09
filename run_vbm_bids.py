@@ -19,8 +19,8 @@ import corr
 
 #Read and extract json args
 args= json.loads(sys.argv[1])
-input_bids_dir = args['input_bids_dir']
-temp_write_dir = args['temp_write_dir']
+input_bids_dir = args['inputBidsDir']
+temp_write_dir = args['tempWriteDir']
 
 
 
