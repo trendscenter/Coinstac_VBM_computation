@@ -56,8 +56,8 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
             spm.SPMCommand.set_mlab_paths(matlab_cmd=matlab_cmd, use_mcr=True)
 
             # Set the paths to the SPM12 Template and transform.mat
-            transf_mat_path = '/root/vbm_scripts/transform.mat'
-            tpm_path = '/root/vbm_scripts/TPM.nii'
+            transf_mat_path = '/computation/transform.mat'
+            tpm_path = '/computation/TPM.nii'
 
             # Create vbm_spm12 dir under the specific sub-id/anat
             if not os.path.exists(vbm_out + "/vbm_spm12"):
