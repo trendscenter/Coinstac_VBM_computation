@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 
-#Example run of the code- python3 /root/vbm_scripts/run_vbm_bids.py '{"inputBidsDir":"/root/data/bids_input","tempWriteDir":"/root/coinstac/tmp/"}'
+#Example run of the code- python3 /root/vbm_scripts/run_vbm_bids.py '{"inputBidsDir":"/computation/test_bids_input_data","tempWriteDir":"/computation/tmp/"}'
 
 import glob, os,sys,json,argparse,shutil
 import nibabel as nib
