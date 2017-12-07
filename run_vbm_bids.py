@@ -57,7 +57,7 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
 
             # Set the paths to the SPM12 Template and transform.mat
             transf_mat_path = '/computation/transform.mat'
-            tpm_path = '/computation/TPM.nii'
+            tpm_path = '/opt/spm12/spm12_mcr/spm/spm12/tpm/TPM.nii'
 
             # Create vbm_spm12 dir under the specific sub-id/anat
             if not os.path.exists(vbm_out + "/vbm_spm12"):
