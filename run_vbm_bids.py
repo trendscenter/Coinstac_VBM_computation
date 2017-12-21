@@ -17,7 +17,7 @@ from nipype.interfaces.io import DataSink
 from nipype.interfaces.utility import Function
 import nipype.pipeline.engine as pe
 
-# Import corr.py (correlation) script
+## Import corr.py (correlation) script ##
 import corr
 
 SCAN_TYPE = 'T1w'
@@ -44,7 +44,7 @@ if __name__=='__main__':
         glob_str = os.path.join(input_bids_dir, 'sub*', '*', '*T1w*.nii.gz')
         smri_data = glob.glob(glob_str)
 
-        # Loop through each of the T1w*.nii.gz file to run the algorithm, this algorithm runs serially
+        ## Loop through each of the T1w*.nii.gz file to run the algorithm, this algorithm runs serially ##
         i = 0  # variable for looping
         count_success = 0  # variable for counting how many subjects were successfully run
         while i < len(smri_data):
@@ -70,13 +70,13 @@ if __name__=='__main__':
             os.makedirs(os.path.join(vbm_out + "vbm_spm12"), exist_ok=True)
 
             # Create the VBM pipeline using Nipype
-            # 1 Reorientation node and settings
+            ## 1 Reorientation node and settings ##
             reorient = pe.Node(interface=ApplyTransform(), name='reorient')
             reorient.inputs.mat = transf_mat_path
             if os.path.exists(nifti_file): reorient.inputs.in_file = nifti_file
             reorient.inputs.out_file = vbm_out + "/vbm_spm12/Re.nii"
 
-            # 2 Segementation Node and settings
+            ## 2 Segementation Node and settings ##
             segmentation = pe.Node(interface=NewSegment(), name='segmentation')
             segmentation.inputs.channel_info = (0.0001, 60, (False, False))
             Tis1 = ((tpm_path, 1), 1, (True, False), (True, True))
@@ -88,7 +88,7 @@ if __name__=='__main__':
             segmentation.inputs.tissues = [Tis1, Tis2, Tis3, Tis4, Tis5, Tis6]
 
 
-            # 3 Function & Node to transform the list of normalized class images to a compatible version for smoothing
+            ## 3 Function & Node to transform the list of normalized class images to a compatible version for smoothing ##
             def transform_list(normalized_class_images):
                 return [each[0] for each in normalized_class_images]
 
@@ -100,15 +100,15 @@ if __name__=='__main__':
             )
             list_normalized_images = pe.Node(interface=interface, name='list_normalized_images')
 
-            # 4 Smoothing Node & Settings
+            ## 4 Smoothing Node & Settings ##
             smoothing = pe.Node(interface=Smooth(), name='smoothing')
             smoothing.inputs.fwhm = [smooth_mm_value, smooth_mm_value, smooth_mm_value]
 
-            # 5 Datsink Node that collects segmented, smoothed files and writes to temp_write_dir
+            ## 5 Datsink Node that collects segmented, smoothed files and writes to temp_write_dir ##
             datasink = pe.Node(interface=DataSink(), name='sinker')
             datasink.inputs.base_directory = vbm_out
 
-            # 6 Create the pipeline/workflow and connect the nodes created above
+            ## 6 Create the pipeline/workflow and connect the nodes created above ##
             vbm_preprocess = pe.Workflow(name="vbm_preprocess")
             vbm_preprocess.connect([(reorient, segmentation, [('out_file', 'channel_files')]), \
                                     (segmentation, list_normalized_images,
@@ -120,7 +120,7 @@ if __name__=='__main__':
                                     (smoothing, datasink, [('smoothed_files', 'vbm_spm12.@4')])])
 
             try:
-                # Remove any tmp files in the docker
+                ## Remove any tmp files in the docker ##
                 if (os.path.exists('/var/tmp')):
                     shutil.rmtree('/var/tmp', ignore_errors=True)
 
@@ -139,7 +139,7 @@ if __name__=='__main__':
                 if os.path.exists(os.getcwd() + '/pyscript.m'):
                     os.remove(os.getcwd() + '/pyscript.m')
 
-                # Pipeline execution starts here..
+                ## Pipeline execution starts here.. ##
 
                 # gunzip *T1w*.gz files
                 n1_img = nib.load(gzip_file_path)
@@ -153,7 +153,7 @@ if __name__=='__main__':
                 t_file = glob.glob(vbm_out + "/vbm_spm12/swc1*nii")
                 corr_value = corr.get_corr(tpm_path, segmented_file[0])
 
-                # Write a text file that desribes what the output files are
+                ## Write a text file that desribes what the output files are ##
                 with open(vbm_out + '/vbm_spm12/outputs_description.txt', 'w') as fp:
                     fp.write(
                         "Prefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air"
@@ -178,7 +178,7 @@ if __name__=='__main__':
                 count_success = count_success + 1
 
             finally:
-                # Remove any tmp files in the docker
+                ## Remove any tmp files in the docker ##
                 if (os.path.exists('/var/tmp')): shutil.rmtree('/var/tmp', ignore_errors=True)
                 for c in glob.glob(os.getcwd() + '/crash*'): os.remove(c)
                 for f in glob.glob(os.getcwd() + '/tmp*'): shutil.rmtree(f, ignore_errors=True)
