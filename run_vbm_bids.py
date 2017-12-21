@@ -1,11 +1,15 @@
-# !/usr/bin/env python
+"""************************** run_vbm_bids.py ****************"""
+""" This script runs vbm pipeline on BIDS anatomical data using spm12 standalone and Matlab common runtime"""
+"""Example run of the code- python3 /computation/run_vbm_bids.py '{"inputBidsDir":"/computation/test_bids_input_data","tempWriteDir":"/computation/"}'"""
+""" Input args: --run json (this json structure may involve different field for different run) """ 
+""" output: json """ 
 
-#Example run of the code- python3 /computation/run_vbm_bids.py '{"inputBidsDir":"/computation/test_bids_input_data","tempWriteDir":"/computation/"}'
-
+## script name: run_vbm_bids.py ##
+## import dependent libraries ##
 import glob, os,sys,json,argparse,shutil
 import nibabel as nib
 
-# Load Nipype interfaces
+## Load Nipype interfaces ##
 from nipype.interfaces import spm
 from nipype.interfaces.spm.utils import DicomImport, ApplyTransform
 from nipype.interfaces.spm import NewSegment, Smooth
@@ -126,7 +130,7 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
                     if os.path.exists(nifti_file): res = vbm_preprocess.run()
 
                     #Calculate correlation coefficent of swc1*nii to SPM12 TPM.nii
-                    segmented_file = glob.glob(vbm_out + "/vbm_spm12/swc1*nii")
+                    t_file = glob.glob(vbm_out + "/vbm_spm12/swc1*nii")
                     corr_value = corr.get_corr(tpm_path, segmented_file[0])
 
                     #Write a text file that desribes what the output files are
