@@ -1,6 +1,6 @@
 """************************** run_vbm_bids.py ****************"""
 """ This script runs vbm pipeline on BIDS anatomical data using spm12 standalone and Matlab common runtime"""
-"""Example run of the code- python3 /computation/run_vbm_bids.py '{"inputBidsDir":"/computation/test_bids_input_data","tempWriteDir":"/computation/"}'"""
+"""Example run of the code- python3 /computation/run_vbm_bids.py --run '{"inputBidsDir":"/computation/test_bids_input_data","tempWriteDir":"/computation/"}'"""
 """ Input args: --run json (this json structure may involve different field for different run) """ 
 """ output: json """ 
 
@@ -20,52 +20,56 @@ import nipype.pipeline.engine as pe
 #Import corr.py (correlation) script
 import corr
 
+SCAN_TYPE = 'T1w'
+smooth_mm_value=10
+# Set the paths to the SPM12 Template and transform.mat
+transf_mat_path = '/computation/transform.mat'
+tpm_path = '/opt/spm12/spm12_mcr/spm/spm12/tpm/TPM.nii'
+
 
 #Read and extract json args
-args= json.loads(sys.argv[1])
-input_bids_dir = args['inputBidsDir']
-temp_write_dir = args['tempWriteDir']
+parser = argparse.ArgumentParser(description='read in coinstac args for local computation')
+parser.add_argument('--run', type=str,  help='grab coinstac args')
+args = parser.parse_args()
+args.run = json.loads(args.run)
+input_bids_dir = args.run['inputBidsDir']
+temp_write_dir = args.run['tempWriteDir']
 
 
 
 #Check if input_bids_dir is in BIDS format using bids-validator tool and check if it has T1w data and write permissions to tmp write dir
 cmd = "bids-validator {0}".format(input_bids_dir)
-a=os.popen(cmd).read()
+bids_process=os.popen(cmd).read()
 
-if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
+if bids_process and (SCAN_TYPE in bids_process) and os.access(temp_write_dir, os.W_OK):
         # Get the paths to the T1w files to run the algorithm
-        smri_data = glob.glob(input_bids_dir + '/sub*/*/*T1w*.nii.gz')
+        glob_str = os.path.join(input_bids_dir, 'sub*', '*', '*T1w*.nii.gz')
+        smri_data = glob.glob(glob_str)
 
         # Loop through each of the T1w*.nii.gz file to run the algorithm, this algorithm runs serially
         i=0 #variable for looping
         count_success=0 # variable for counting how many subjects were successfully run
         while i<len(smri_data):
-            gz=smri_data[i]
+            gzip_file_path=smri_data[i]
             i=i+1
 
             #Extract subject directory name from the T1w*.nii.gz files
-            sub_id = gz.split('/')[-3]
+            sub_id = os.path.dirname(os.path.dirname(gzip_file_path))
 
             vbm_out = temp_write_dir + '/' + sub_id + '/anat'
-            nii_output = (gz.split('/')[-1]).split('.gz')[0]
+            nii_output = (gzip_file_path.split('/')[-1]).split('.gz')[0]
 
             # Create output dir for sub_id
-            if not os.path.exists(vbm_out):
-                    os.makedirs(vbm_out)
+            os.makedirs(path, exist_ok=True)
 
-            nifti_file = vbm_out + '/' + nii_output
+            nifti_file = os.path.join(vbm_out,nii_output)
 
             # Connect spm12 standalone to nipype
             matlab_cmd = '/opt/spm12/run_spm12.sh /opt/mcr/v92 script'
             spm.SPMCommand.set_mlab_paths(matlab_cmd=matlab_cmd, use_mcr=True)
 
-            # Set the paths to the SPM12 Template and transform.mat
-            transf_mat_path = '/computation/transform.mat'
-            tpm_path = '/opt/spm12/spm12_mcr/spm/spm12/tpm/TPM.nii'
-
             # Create vbm_spm12 dir under the specific sub-id/anat
-            if not os.path.exists(vbm_out + "/vbm_spm12"):
-                os.makedirs(vbm_out + "/vbm_spm12")
+            os.makedirs(os.path.join(vbm_out + "vbm_spm12"), exist_ok=True)
 
             # Create the VBM pipeline using Nipype
             #1 Reorientation node and settings
@@ -90,11 +94,16 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
             def transform_list(normalized_class_images):
                     return [each[0] for each in normalized_class_images]
 
-            list_normalized_images = pe.Node(interface=Function(input_names='normalized_class_images', output_names='list_norm_images', function=transform_list),name='list_normalized_images')
-
+            interface = Function(
+                input_names='normalized_class_images', 
+                output_names='list_norm_images', 
+                function=transform_list
+            )
+            list_normalized_images = pe.Node(interface=interface, name='list_normalized_images')
+                
             #4 Smoothing Node & Settings
             smoothing = pe.Node(interface=Smooth(), name='smoothing')
-            smoothing.inputs.fwhm = [10, 10, 10]
+            smoothing.inputs.fwhm = [smooth_mm_value, smooth_mm_value, smooth_mm_value]
 
             #5 Datsink Node that collects segmented, smoothed files and writes to temp_write_dir
             datasink = pe.Node(interface=DataSink(), name='sinker')
@@ -113,21 +122,33 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
 
             try:
                     # Remove any tmp files in the docker
-                    if (os.path.exists('/var/tmp')): shutil.rmtree('/var/tmp', ignore_errors=True)
-                    for c in glob.glob(os.getcwd() + '/crash*'): os.remove(c)
-                    for f in glob.glob(os.getcwd() + '/tmp*'): shutil.rmtree(f, ignore_errors=True)
-                    for f in glob.glob(os.getcwd() + '/__pycache__'): shutil.rmtree(f, ignore_errors=True)
-                    if os.path.exists(os.getcwd() +'/vbm_preprocess'): shutil.rmtree(os.getcwd() +'/vbm_preprocess', ignore_errors=True)
-                    if os.path.exists(os.getcwd() + '/pyscript.m'): os.remove(os.getcwd() + '/pyscript.m')
+                    if (os.path.exists('/var/tmp')): 
+                                shutil.rmtree('/var/tmp', ignore_errors=True)
+                                
+                    for c in glob.glob(os.getcwd() + '/crash*'): 
+                        os.remove(c)
+                        
+                    for f in glob.glob(os.getcwd() + '/tmp*'): 
+                        shutil.rmtree(f, ignore_errors=True)
+                        
+                    for f in glob.glob(os.getcwd() + '/__pycache__'): 
+                        shutil.rmtree(f, ignore_errors=True)
+                        
+                    if os.path.exists(os.getcwd() +'/vbm_preprocess'): 
+                        shutil.rmtree(os.getcwd() +'/vbm_preprocess', ignore_errors=True)
+                        
+                    if os.path.exists(os.getcwd() + '/pyscript.m'): 
+                        os.remove(os.getcwd() + '/pyscript.m')
 
                     # Pipeline execution starts here..
 
                     # gunzip *T1w*.gz files
-                    n1_img = nib.load(gz)
-                    nib.save(n1_img, vbm_out + '/' + nii_output)
+                    n1_img = nib.load(gzip_file_path)
+                    nib.save(n1_img, os.path.join(vbm_out,nii_output))
 
                     # Run the VBM pipeline
-                    if os.path.exists(nifti_file): res = vbm_preprocess.run()
+                    if os.path.exists(nifti_file): 
+                                res = vbm_preprocess.run()
 
                     #Calculate correlation coefficent of swc1*nii to SPM12 TPM.nii
                     t_file = glob.glob(vbm_out + "/vbm_spm12/swc1*nii")
@@ -165,7 +186,7 @@ if (a) and ('T1w' in a) and (os.access(temp_write_dir, os.W_OK)):
                     if os.path.exists(os.getcwd() + '/pyscript.m'): os.remove(os.getcwd() + '/pyscript.m')
 
                     # On the last subject in the BIDS directory , write the success status output to json object
-                    if gz==smri_data[-1]:
+                    if gzip_file_path==smri_data[-1]:
                         if count_success>0: status=True # If atleast 1 scan in the BIDS directory finishes successfully 
                         sys.stdout.write(json.dumps({"output": {"success": status}}))
 
