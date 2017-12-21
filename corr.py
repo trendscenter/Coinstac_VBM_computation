@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+"""************************** corr.py ****************"""
+""" This script is called by run_vbm_bids.py """
+""" This script computes the correlation value between wc1*nii from the vbm output to the gray matter template from spm12"""
 
 import nibabel as nb
 import numpy as np
