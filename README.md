@@ -7,6 +7,6 @@ Test bids data is placed in /computation/test_bids_input_data
 
 Example run below:
 
-python3 /computation/run_vbm_bids.py '{"inputBidsDir":"/computation/test_bids_input_data","tempWriteDir":"/tempWriteDir"}'
+python3 /computation/run_vbm_bids.py --run '{"inputBidsDir":"/computation/test_bids_input_data","tempWriteDir":"/tempWriteDir"}'
 
 At the end of the computation , the output is written to stdout in json with the property "success" set to true/false indicating whether the algorithm ran successfully or failed
