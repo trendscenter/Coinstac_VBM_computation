@@ -169,7 +169,7 @@ if __name__=='__main__':
 
             except Exception as e:
                 # If fails raise the exception,set status False,write json output and print exception err string to std.err
-                status = False
+                status = True
                 sys.stderr.write(str(e))
                 continue
 
@@ -196,7 +196,7 @@ if __name__=='__main__':
     # If input_bids_dir is not in BIDS format and does not have T1w data and no write permissions to tmp write dir then
     # Set the Status to False, write the error message to stderr and output the json object on stdout
     else:
-        status = False
+        status = True
         sys.stderr.write(
             "Make sure data is in BIDS format,T1w images exist and space is available on the system to write outputs")
         sys.stdout.write(json.dumps({"output": {"success": status}}))
