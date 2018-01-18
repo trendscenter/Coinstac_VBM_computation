@@ -24,7 +24,7 @@ SCAN_TYPE = 'T1w'
 smooth_mm_value = 10
 # Set the paths to the SPM12 Template and transform.mat
 transf_mat_path = '/computation/transform.mat'
-tpm_path = '/opt/spm12/spm12_mcr/spm/spm12/tpm/TPM.nii'
+tpm_path = '/opt/spm12/tpm/fsroot/spm/spm12/tpm/TPM.nii'
 
 if __name__=='__main__':
     # Read and extract json args
@@ -58,7 +58,7 @@ if __name__=='__main__':
             nii_output = (gzip_file_path.split('/')[-1]).split('.gz')[0]
 
             # Create output dir for sub_id
-            os.makedirs(path, exist_ok=True)
+            os.makedirs(vbm_out, exist_ok=True)
 
             nifti_file = os.path.join(vbm_out, nii_output)
 
