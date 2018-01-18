@@ -24,7 +24,7 @@ SCAN_TYPE = 'T1w'
 smooth_mm_value = 10
 # Set the paths to the SPM12 Template and transform.mat
 transf_mat_path = '/computation/transform.mat'
-tpm_path = '/opt/spm12/tpm/fsroot/spm/spm12/tpm/TPM.nii'
+tpm_path = '/opt/spm12/fsroot/spm/spm12/tpm/TPM.nii'
 
 if __name__=='__main__':
     # Read and extract json args
