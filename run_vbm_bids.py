@@ -67,7 +67,7 @@ if __name__=='__main__':
             spm.SPMCommand.set_mlab_paths(matlab_cmd=matlab_cmd, use_mcr=True)
 
             # Create vbm_spm12 dir under the specific sub-id/anat
-            os.makedirs(os.path.join(vbm_out + "vbm_spm12"), exist_ok=True)
+            os.makedirs(os.path.join(vbm_out + "/vbm_spm12"), exist_ok=True)
 
             # Create the VBM pipeline using Nipype
             ## 1 Reorientation node and settings ##
