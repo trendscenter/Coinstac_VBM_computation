@@ -24,6 +24,7 @@ SCAN_TYPE = 'T1w'
 smooth_mm_value = 10
 # Set the paths to the SPM12 Template and transform.mat
 transf_mat_path = '/computation/transform.mat'
+spm_path=["/opt/spm12/fsroot"]
 tpm_path = '/opt/spm12/fsroot/spm/spm12/tpm/TPM.nii'
 
 if __name__=='__main__':
@@ -75,6 +76,7 @@ if __name__=='__main__':
             reorient.inputs.mat = transf_mat_path
             if os.path.exists(nifti_file): reorient.inputs.in_file = nifti_file
             reorient.inputs.out_file = vbm_out + "/vbm_spm12/Re.nii"
+            reorient.inputs.paths=spm_path
 
             ## 2 Segementation Node and settings ##
             segmentation = pe.Node(interface=NewSegment(), name='segmentation')
@@ -86,6 +88,7 @@ if __name__=='__main__':
             Tis5 = ((tpm_path, 5), 4, (True, False), (True, True))
             Tis6 = ((tpm_path, 6), 2, (True, False), (True, True))
             segmentation.inputs.tissues = [Tis1, Tis2, Tis3, Tis4, Tis5, Tis6]
+            segmentation.inputs.paths=spm_path
 
 
             ## 3 Function & Node to transform the list of normalized class images to a compatible version for smoothing ##
@@ -103,6 +106,8 @@ if __name__=='__main__':
             ## 4 Smoothing Node & Settings ##
             smoothing = pe.Node(interface=Smooth(), name='smoothing')
             smoothing.inputs.fwhm = [smooth_mm_value, smooth_mm_value, smooth_mm_value]
+            smoothing.inputs.paths=spm_path
+            
 
             ## 5 Datsink Node that collects segmented, smoothed files and writes to temp_write_dir ##
             datasink = pe.Node(interface=DataSink(), name='sinker')
