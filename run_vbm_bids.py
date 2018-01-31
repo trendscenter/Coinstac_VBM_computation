@@ -62,6 +62,10 @@ if __name__=='__main__':
             os.makedirs(vbm_out, exist_ok=True)
 
             nifti_file = os.path.join(vbm_out, nii_output)
+            n1_img = nib.load(gzip_file_path)
+            nib.save(n1_img, os.path.join(vbm_out, nii_output))
+            
+            
 
             # Connect spm12 standalone to nipype
             matlab_cmd = '/opt/spm12/run_spm12.sh /opt/mcr/v92 script'
@@ -147,8 +151,8 @@ if __name__=='__main__':
                 ## Pipeline execution starts here.. ##
 
                 # gunzip *T1w*.gz files
-                n1_img = nib.load(gzip_file_path)
-                nib.save(n1_img, os.path.join(vbm_out, nii_output))
+                #n1_img = nib.load(gzip_file_path)
+                #nib.save(n1_img, os.path.join(vbm_out, nii_output))
 
                 # Run the VBM pipeline
                 if os.path.exists(nifti_file):
