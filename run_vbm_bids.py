@@ -150,10 +150,6 @@ if __name__=='__main__':
 
                 ## Pipeline execution starts here.. ##
 
-                # gunzip *T1w*.gz files
-                #n1_img = nib.load(gzip_file_path)
-                #nib.save(n1_img, os.path.join(vbm_out, nii_output))
-
                 # Run the VBM pipeline
                 if os.path.exists(nifti_file):
                     res = vbm_preprocess.run()
