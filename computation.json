@@ -35,6 +35,11 @@
       "success": {
         "type": "boolean"
       }
+       "OutputDirectories": {
+        "type": "array",
+        "contains": ["string"]
+      }
+
     }
   }
 }
