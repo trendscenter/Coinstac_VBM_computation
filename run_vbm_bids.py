@@ -155,7 +155,7 @@ if __name__=='__main__':
                     res = vbm_preprocess.run()
 
                 # Calculate correlation coefficent of swc1*nii to SPM12 TPM.nii
-                t_file = glob.glob(vbm_out + "/vbm_spm12/swc1*nii")
+                segmented_file = glob.glob(vbm_out + "/vbm_spm12/swc1*nii")
                 corr_value = corr.get_corr(tpm_path, segmented_file[0])
 
                 ## Write a text file that desribes what the output files are ##
