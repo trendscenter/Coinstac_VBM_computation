@@ -161,7 +161,7 @@ if __name__=='__main__':
                 if os.path.exists(nifti_file):
                     res = vbm_preprocess.run()
                     dirs.append(os.path.join(vbm_out + "/vbm_spm12"))
-                    wc1files.append(glob.glob(vbm_out + "/vbm_spm12/wc1*nii"))
+                    wc1files.append(glob.glob(vbm_out + "/vbm_spm12/wc1*nii")[0])
 
                 # Calculate correlation coefficent of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(vbm_out + "/vbm_spm12/swc1*nii")
