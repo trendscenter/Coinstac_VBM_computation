@@ -6,7 +6,7 @@
 
 ## script name: run_vbm_bids.py ##
 ## import dependent libraries ##
-import glob, os, sys, json, argparse, shutil
+import glob, os, sys, json, argparse, shutil, ast
 import nibabel as nib
 
 ## Load Nipype interfaces ##
@@ -35,7 +35,7 @@ if __name__=='__main__':
     args.run = json.loads(args.run)
     input_bids_dir = args.run['inputBidsDir']
     temp_write_dir = args.run['tempWriteDir']
-    smooth_mm_value = args.run['SmoothingValue']
+    smooth_mm_value = ast.literal_eval(args.run['SmoothingValue'])
 
     # Check if input_bids_dir is in BIDS format using bids-validator tool and check if it has T1w data and write permissions to tmp write dir
     cmd = "bids-validator {0}".format(input_bids_dir)
