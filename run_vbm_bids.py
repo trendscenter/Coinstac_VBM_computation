@@ -48,6 +48,13 @@ if __name__=='__main__':
         ## Loop through each of the T1w*.nii.gz file to run the algorithm, this algorithm runs serially ##
         i = 0  # variable for looping
         count_success = 0  # variable for counting how many subjects were successfully run
+        
+        #create dirs array to store output directories where vbm spm12 data is written to
+        dirs=[]
+        
+        #create wc1files array to store paths to wc1 files for each subject
+        wc1files=[]
+        
         while i < len(smri_data):
             gzip_file_path = smri_data[i]
             i = i + 1
@@ -153,6 +160,8 @@ if __name__=='__main__':
                 # Run the VBM pipeline
                 if os.path.exists(nifti_file):
                     res = vbm_preprocess.run()
+                    dirs.append(os.path.join(vbm_out + "/vbm_spm12"))
+                    wc1files.append(glob.glob(vbm_out + "/vbm_spm12/wc1*nii"))
 
                 # Calculate correlation coefficent of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(vbm_out + "/vbm_spm12/swc1*nii")
@@ -204,4 +213,4 @@ if __name__=='__main__':
         status = True
         sys.stderr.write(
             "Make sure data is in BIDS format,T1w images exist and space is available on the system to write outputs")
-        sys.stdout.write(json.dumps({"output": {"success": status}}))
+        sys.stdout.write(json.dumps({"output": {"success": status},{"vbmdirs":dirs},{"wc1files":wc1files}}))
