@@ -22,13 +22,23 @@ def get_data(path):
     stn_data = np.nan_to_num(stn_data)
     return stn_data
 
+def mean2(x):
+        y = np.sum(x) / np.size(x);
+        return y
+
+def corr2(a,b):
+        a = a - mean2(a)
+        b = b - mean2(b)
+        r = (a*b).sum() / math.sqrt((a*a).sum() * (b*b).sum())
+        return r
+
 
 def get_corr(template,segmented_file):
     cstn_data = get_data(template)
     cre_data = get_data(segmented_file)
     indices = np.logical_and(cstn_data!=0,cre_data!=0)
     fcstn_data, fcre_data = cstn_data[indices], cre_data[indices]   
-    covalue = np.corrcoef(fcstn_data,fcre_data)
+    covalue = corr2(fcstn_data,fcre_data)
     write_path= os.path.dirname(segmented_file)
     with open(os.path.join(write_path, VBM_CORR_VALUE_FILE_NAME),'w') as fp:
 	    fp.write("%3.2f\n"%(covalue))
