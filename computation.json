@@ -10,7 +10,7 @@
   },
   "computation": {
     "type": "docker",
-    "dockerImage": "spanta28/coinstac:vbm_computation",
+    "dockerImage": "spanta28/coinstac_vbm",
     "command": ["python3", "/computation/run_vbm_bids.py"],
     "input": {
       "SmoothingValue":{
