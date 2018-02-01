@@ -28,7 +28,7 @@ def get_corr(template,segmented_file):
     cre_data = get_data(segmented_file)
     indices = np.logical_and(cstn_data!=0,cre_data!=0)
     fcstn_data, fcre_data = cstn_data[indices], cre_data[indices]   
-    covalue = (np.corrcoef(fcstn_data,fcre_data)).item()
+    covalue = np.corrcoef(fcstn_data,fcre_data)
     write_path= os.path.dirname(segmented_file)
     with open(os.path.join(write_path, VBM_CORR_VALUE_FILE_NAME),'w') as fp:
 	    fp.write("%3.2f\n"%(covalue))
