@@ -60,7 +60,8 @@ if __name__=='__main__':
             i = i + 1
 
             # Extract subject directory name from the T1w*.nii.gz files
-            sub_id = os.path.dirname(os.path.dirname(gzip_file_path))
+            sub_path = (os.path.dirname(os.path.dirname(gzip_file_path))).split('/')
+            sub_id='/'.join(sub_path[2:len(sub_path)])
 
             vbm_out = temp_write_dir + '/' + sub_id + '/anat'
             nii_output = (gzip_file_path.split('/')[-1]).split('.gz')[0]
