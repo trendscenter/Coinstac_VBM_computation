@@ -35,7 +35,11 @@
       "success": {
         "type": "boolean"
       },
-       "OutputDirectories": {
+       "Dirs": {
+        "type": "array",
+        "contains": ["string"]
+      },
+      "wc1files": {
         "type": "array",
         "contains": ["string"]
       }
