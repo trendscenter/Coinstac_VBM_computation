@@ -21,7 +21,7 @@ import nipype.pipeline.engine as pe
 import corr
 
 SCAN_TYPE = 'T1w'
-smooth_mm_value = [10, 10 10]
+smooth_mm_value = [10, 10, 10]
 # Set the paths to the SPM12 Template and transform.mat
 transf_mat_path = '/computation/transform.mat'
 spm_path=["/opt/spm12/fsroot"]
