@@ -1,6 +1,6 @@
 """************************** run_vbm_bids.py ****************"""
 """ This script runs vbm pipeline on BIDS anatomical data using spm12 standalone and Matlab common runtime"""
-"""Example run of the code- python3 /computation/run_vbm_bids.py --run '{"inputBidsDir":"/computation/test_bids_input_data","tempWriteDir":"/computation"}'"""
+"""Example run of the code- python3 /computation/run_vbm_bids.py --run '{"inputBidsDir":"/computation/test_bids_input_data","SmoothingValue":"[6, 6, 6]","tempWriteDir":"/computation"}'"""
 """ Input args: --run json (this json structure may involve different field for different run) """
 """ output: json """
 
@@ -21,7 +21,7 @@ import nipype.pipeline.engine as pe
 import corr
 
 SCAN_TYPE = 'T1w'
-smooth_mm_value = 10
+smooth_mm_value = [10, 10 10]
 # Set the paths to the SPM12 Template and transform.mat
 transf_mat_path = '/computation/transform.mat'
 spm_path=["/opt/spm12/fsroot"]
@@ -35,6 +35,7 @@ if __name__=='__main__':
     args.run = json.loads(args.run)
     input_bids_dir = args.run['inputBidsDir']
     temp_write_dir = args.run['tempWriteDir']
+    smooth_mm_value = args.run['SmoothingValue']
 
     # Check if input_bids_dir is in BIDS format using bids-validator tool and check if it has T1w data and write permissions to tmp write dir
     cmd = "bids-validator {0}".format(input_bids_dir)
@@ -117,7 +118,7 @@ if __name__=='__main__':
 
             ## 4 Smoothing Node & Settings ##
             smoothing = pe.Node(interface=Smooth(), name='smoothing')
-            smoothing.inputs.fwhm = [smooth_mm_value, smooth_mm_value, smooth_mm_value]
+            smoothing.inputs.fwhm = smooth_mm_value
             smoothing.inputs.paths=spm_path
             
 
