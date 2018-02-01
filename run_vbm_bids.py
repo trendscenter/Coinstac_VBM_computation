@@ -213,4 +213,4 @@ if __name__=='__main__':
         status = True
         sys.stderr.write(
             "Make sure data is in BIDS format,T1w images exist and space is available on the system to write outputs")
-        sys.stdout.write(json.dumps({"output": {"success": status,"vbmdirs":dirs,"wc1files":wc1files}}))
+        sys.stdout.write(json.dumps({"output": {"success": status,"vbmdirs":dirs,"wc1files":wc1files}}, sort_keys=True, indent=4, separators=(',', ': ')))
