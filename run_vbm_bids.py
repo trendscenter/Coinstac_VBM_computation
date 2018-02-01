@@ -204,7 +204,7 @@ if __name__=='__main__':
                 # On the last subject in the BIDS directory , write the success status output to json object
                 if gzip_file_path == smri_data[-1]:
                     if count_success > 0: status = True  # If atleast 1 scan in the BIDS directory finishes successfully
-                    sys.stdout.write(json.dumps({"output": {"success": status}}))
+                    sys.stdout.write(json.dumps({"output": {"success": status,"vbmdirs":dirs,"wc1files":wc1files}}, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
     # If input_bids_dir is not in BIDS format and does not have T1w data and no write permissions to tmp write dir then
@@ -213,4 +213,4 @@ if __name__=='__main__':
         status = True
         sys.stderr.write(
             "Make sure data is in BIDS format,T1w images exist and space is available on the system to write outputs")
-        sys.stdout.write(json.dumps({"output": {"success": status,"vbmdirs":dirs,"wc1files":wc1files}}, sort_keys=True, indent=4, separators=(',', ': ')))
+        sys.stdout.write(json.dumps({"output": {"success": status}}, sort_keys=True, indent=4, separators=(',', ': ')))
