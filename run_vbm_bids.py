@@ -1,6 +1,6 @@
 """************************** run_vbm_bids.py ****************"""
 """ This script runs vbm pipeline on BIDS anatomical data using spm12 standalone and Matlab common runtime"""
-"""Example run of the code- python3 /computation/run_vbm_bids.py --run '{"inputBidsDir":"/computation","SmoothingValue":"[6, 6, 6]","tempWriteDir":"/computation/bids_vbm_output"}'"""
+# """Example run of the code- python3 /computation/run_vbm_bids.py --run '{"inputBidsDir":"/computation/test_bids_input_data","SmoothingValue":"[6, 6, 6]","tempWriteDir":"/computation"}'"""
 """ Input args: --run json (this json structure may involve different field for different run) """
 """ output: json """
 
