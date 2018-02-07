@@ -11,9 +11,7 @@
   "computation": {
     "type": "docker",
     "dockerImage": "spanta28/coinstac_vbm",
-    "command": ["python3", "/computation/run_vbm_bids.py '{"inputBidsDir":"/computation/test_bids_input_data","SmoothingValue":"[6, 6, 6]","tempWriteDir":"/computation"}'
-
-"],
+    "command": ["python3", "/computation/run_vbm_bids.py '{"inputBidsDir":"/computation/test_bids_input_data","SmoothingValue":"[6, 6, 6]","tempWriteDir":"/computation"}'"],
     "input": {
       "SmoothingValue":{
         "label": "Smoothing kernel value(mm)",
