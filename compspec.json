@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "name": "local test",
+    "id": "coinstac-local-test",
+    "version": "v1.0.0",
+    "repository": "github.com\/user\/computation.git",
+    "description": "a test that sums the last two numbers together for the next"
+  },
+  "computation": {
+    "type": "docker",
+    "dockerImage": "ctest",
+    "command": [
+      "python",
+      "\/computation\/run_vbm_bids.py"
+    ],
+    "input": {
+    "inputBidsDir": {
+        "type": "directory",
+        "label": "Input Bids Directory",
+      },
+    "tempWriteDir": {
+        "type": "directory",
+        "label": "Directory to save outputs",
+      }, 
+      "start": {
+        "type": "number"
+      }
+    },
+    "output": {
+      "success": {
+        "type": "boolean"
+      },
+      "vbmdirs": {
+        "type": "array",
+        "contains": ["string"]
+      },
+      "wc1files": {
+        "type": "array",
+        "contains": ["string"]
+      },
+      "sum": {
+        "type": "number"
+      }
+    }
+  }
+}
