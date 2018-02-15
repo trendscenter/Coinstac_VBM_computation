@@ -16,11 +16,11 @@
     "input": {
     "inputBidsDir": {
         "type": "directory",
-        "label": "Input Bids Directory",
+        "label": "Input Bids Directory"
       },
     "tempWriteDir": {
         "type": "directory",
-        "label": "Directory to save outputs",
+        "label": "Directory to save outputs"
       }, 
       "start": {
         "type": "number"
