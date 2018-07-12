@@ -5,10 +5,10 @@ This layer includes the interface adapter(IA) for parsing json args to read ni p
 This layer sends the output to vbm_use_cases_layer with the appropriate inputs to run the pipeine using nipype interface
 
 Sample run for bids input data:
-python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "BidsDir":"/computation/test_dir/bids_input_data","WriteDir":"/computation/test_dir/bids_output"}}'
+python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "BidsDir":"/computation/test_dir/bids_input_data","WriteDir":"/computation/test_dir/"}}'
 
 Sample run for input data of nifti paths in text file:
-python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "NiftiPathsTxt":"/computation/test_dir/nifti_paths.txt","WriteDir":"/computation/test_dir/nifti_outputs"}}'
+python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "NiftiPathsTxt":"/computation/test_dir/nifti_paths.txt","WriteDir":"/computation/test_dir/"}}'
 """
 
 import ujson as json
