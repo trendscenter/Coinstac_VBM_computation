@@ -17,10 +17,11 @@ ENV PATH=/opt/miniconda/envs/default/bin:$PATH
 RUN curl -ssL -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
     && bash miniconda.sh -b -p /opt/miniconda \
     && rm -f miniconda.sh \
+    && /opt/miniconda/bin/conda update -n base conda \
     && /opt/miniconda/bin/conda config --add channels conda-forge \
     && /opt/miniconda/bin/conda create -y -q -n default python=3.5.1 \
     	traits pandas \
-    && conda clean -y --all \
+#    && conda clean -y --all \
     && pip install -U -q --no-cache-dir pip \
     && pip install -q --no-cache-dir \
     	nipype \
@@ -51,8 +52,20 @@ ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
     SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \
     FORCE_SPMMCR=1 \
     LD_LIBRARY_PATH=/opt/mcr/v*/runtime/glnxa64:/opt/mcr/v*/bin/glnxa64:/opt/mcr/v*/sys/os/glnxa64:$LD_LIBRARY_PATH
+
     
 # Install Bids Validator using npm
 RUN curl -sL https://rpm.nodesource.com/setup_6.x | bash - \
-    && yum install -y nodejs \
-    && npm install -g bids-validator
+    && yum install -y nodejs gcc \
+    && npm install -g bids-validator 
+
+#Install other python packages
+RUN pip install med2image pybids coverage
+RUN pip install --no-cache-dir -r /computation/requirements.txt
+
+#Install bottle
+ADD server/requirements.txt /server
+ADD server/server.py /server
+RUN pip install cython future pillow
+RUN pip install --no-cache-dir -r /computation/server/requirements.txt
+CMD ["python", "-u", "/computation/server/server.py"]

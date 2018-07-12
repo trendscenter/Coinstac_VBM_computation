@@ -1,0 +1,4 @@
+/computation/test_dir/nifti_inputs/sub-02_T1w.nii.gz
+/computation/test_dir/nifti_inputs/sub-04_T1w.nii.gz
+/computation/test_dir/nifti_inputs/sub-03_T1w.nii
+/computation/test_dir/nifti_inputs/sub1.nii.gz
