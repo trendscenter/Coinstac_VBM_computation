@@ -7,16 +7,19 @@ This layer sends the output to vbm_use_cases_layer with the appropriate inputs t
 Sample run for bids input data:
 python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "BidsDir":"/computation/test_dir/bids_input_data","WriteDir":"/computation/test_dir/bids_output"}}'
 
-Sample run for input data of nifti paths in text file:
-python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "NiftiPathsTxt":"/computation/test_dir/nifti_paths.txt","WriteDir":"/computation/test_dir/nifti_outputs"}}'
+Sample run for input data of nifti paths in text or csv file:
+python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "NiftiPaths":"/computation/test_dir/nifti_paths.txt","WriteDir":"/computation/test_dir/nifti_outputs"}}'
 """
 
 import ujson as json
-import warnings, os, sys, time
-import nibabel as nib
+import warnings, os, sys
 
 ## Load Nipype spm interface ##
 from nipype.interfaces import spm
+
+#Stop printing nipype.workflow info to stdout
+from nipype import logging
+logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
 import vbm_use_cases_layer
 
@@ -53,7 +56,7 @@ template_dict = {
     "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
     "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
     'nifti_outputs_manual_content':
-    "sub-1,sub-2,sub-* denotes each nifti file with respect to the order in the nifti paths text file"
+    "sub-1,sub-2,sub-* denotes each nifti file with respect to the order in the nifti paths given"
     "Prefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
     "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
     "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
@@ -150,11 +153,22 @@ def process_bids(args):
         sys.stderr.write(
             'Incompatible Bids directory format or write directory does not have permissions'
         )
-        return json.dumps({"output": {"success": True}})
+        return sys.stdout.write(
+            json.dumps({
+                "output": {
+                    "vbmdirs": [],
+                    "wc1files": [],
+                    "complete%": 0
+                },
+                "cache": {
+                    "wc1files": []
+                },
+                "success": True
+            }))
 
 
 def process_niftis(args):
-    """Runs the pre-processing pipeline on structural T1w nifti scans from paths in the text file
+    """Runs the pre-processing pipeline on structural T1w nifti scans from paths in the text or csv file
             Args:
                 args (dictionary): {"input":{
                                             "NiftiFile": {
@@ -188,13 +202,13 @@ def process_niftis(args):
 
             """
 
-    paths_file = args['input']['NiftiPathsTxt']
+    paths_file = args['input']['NiftiPaths']
     WriteDir = args['input']['WriteDir']
 
     if 'opts' in args['input']: opts = args['input']['opts']
     else: opts = None
 
-    # Reach each line in nifti_paths.txt into niftis variable
+    # Read each line in nifti_paths file into niftis variable
     niftis = []
     with open(paths_file, "r") as f:
         for line in f:
@@ -209,7 +223,18 @@ def process_niftis(args):
             **template_dict)
     else:
         sys.stderr.write('write directory does not have permissions')
-        return json.dumps({"output": {"success": True}})
+        return sys.stdout.write(
+            json.dumps({
+                "output": {
+                    "vbmdirs": [],
+                    "wc1files": [],
+                    "complete%": 0
+                },
+                "cache": {
+                    "wc1files": []
+                },
+                "success": True
+            }))
 
 
 def software_check():
@@ -224,23 +249,29 @@ if __name__ == '__main__':
 
     # Check if spm is running
     spm_check = software_check()
-    if spm_check is None:
+    if spm_check != template_dict['spm_version']:
         raise EnvironmentError("spm unable to start in vbm docker")
 
     # The following block of code assigns the appropriate pre-processing function for input data format, based on Bids or nifti file paths in text file
     args = json.loads(sys.argv[1])
 
-    if args and (spm_check == template_dict['spm_version']):
-        if ('BidsDir' in args['input']) and ('WriteDir' in args['input']):
-            computation_output = process_bids(args)
-            sys.stdout.write(computation_output)
-        elif ('NiftiPathsTxt' in args['input']) and (
-                'WriteDir' in args['input']):
-            computation_output = process_niftis(args)
-            sys.stdout.write(computation_output)
-        else:
-            sys.stderr.write('Cannot read input data from json')
-
+    if ('BidsDir' in args['input']) and ('WriteDir' in args['input']):
+        computation_output = process_bids(args)
+        sys.stdout.write(computation_output)
+    elif ('NiftiPaths' in args['input']) and ('WriteDir' in args['input']):
+        computation_output = process_niftis(args)
+        sys.stdout.write(computation_output)
     else:
-        raise ValueError(
-            "Incompatible json or spm unable to start in vbm docker")
+        sys.stdout.write(
+            json.dumps({
+                "output": {
+                    "vbmdirs": [],
+                    "wc1files": [],
+                    "complete%": 0
+                },
+                "cache": {
+                    "wc1files": []
+                },
+                "success": True
+            }))
+        sys.stderr.write('Cannot read data from json')

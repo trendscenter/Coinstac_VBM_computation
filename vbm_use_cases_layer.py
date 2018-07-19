@@ -91,7 +91,7 @@ def remove_tmp_files():
     for f in glob.glob(os.getcwd() + '/__pycache__'):
         shutil.rmtree(f, ignore_errors=True)
 
-    shutil.rmtree(os.getcwd() + '/vbm_preprocess')
+    shutil.rmtree(os.getcwd() + '/vbm_preprocess', ignore_errors=True)
 
     if os.path.exists(os.getcwd() + '/pyscript.m'):
         os.remove(os.getcwd() + '/pyscript.m')
@@ -423,7 +423,7 @@ def run_pipeline(write_dir,
 
         except Exception as e:
             # If fails raise the exception,print exception error
-            sys.stderr.write(str(e))
+            # sys.stderr.write(str(e))
             continue
 
         else:
@@ -436,7 +436,8 @@ def run_pipeline(write_dir,
     Calculate how many nifti's successfully got run through the pipeline, this may help in colloborative projects
     where some of the projects may have low quality data
     '''
-    completed_percent = (count_success / len(smri_data)) * 100
+    completed_percent = (
+        (count_success / len(smri_data)) * 100) if len(smri_data) != 0 else 0
     '''
     Status=True means program finished execution , despite the success or failure of the code
     This is to indicate to coinstac that program finished execution
@@ -444,9 +445,12 @@ def run_pipeline(write_dir,
 
     return json.dumps({
         "output": {
-            "success": True,
             "vbmdirs": dirs,
             "wc1files": wc1files,
-            "complete%": completed_percent
-        }
+            "%DataPreprocessed": completed_percent
+        },
+        "cache": {
+            "wc1files": wc1files
+        },
+        "success": True,
     })
