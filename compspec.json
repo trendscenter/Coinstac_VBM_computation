@@ -1,46 +1,49 @@
 {
   "meta": {
-    "name": "local test",
-    "id": "coinstac-local-test",
-    "version": "v1.0.0",
-    "repository": "github.com\/user\/computation.git",
-    "description": "a test that sums the last two numbers together for the next"
+    "id": "preprocess-vbm",
+    "name": "VBM (Voxel Based Morphometry) on T1W scans",
+    "version":  "v1.0",
+    "repository": "github.com/MRN-Code/Coinstac_VBM_computation.git",
+    "description": "This computation runs Voxel Based Morphometry on structural T1 weighted MRI scans(BIDS format and T1w nifiti) using SPMv12 standalone and MATLAB Runtimev713. Each scan takes approximately 5 mins to run on a system with 2.3 GHz,i5 equivalent processor, 8GB RAM. Each scan output directory takes about 150MB space. Please make sure to have the space and resources.",
+    "tags": ["vbm", "preprocess"], 
+    "preprocess": true
   },
   "computation": {
     "type": "docker",
-    "dockerImage": "ctest",
+    "dockerImage": "vbm_test",
     "command": [
       "python",
-      "\/computation\/run_vbm_bids.py"
+      "\/computation\/run_vbm.py"
     ],
-    "input": {
-    "inputBidsDir": {
-        "type": "directory",
-        "label": "Input Bids Directory"
-      },
-    "tempWriteDir": {
-        "type": "directory",
-        "label": "Directory to save outputs"
-      }, 
-      "start": {
-        "type": "number"
-      }
-    },
+
+
+"input":{
+
+"options":{
+"type":"number"
+},
+
+"BidsDir":{
+"type":"directory",
+"label": "Input Bids Directory"
+},
+
+"WriteDir":{
+"type":"directory",
+"label": "Directory to save outputs"
+}
+
+},
+  
     "output": {
-      "success": {
-        "type": "boolean"
+      "image":{
+      "type": "string"
       },
-      "vbmdirs": {
-        "type": "array",
-        "contains": ["string"]
-      },
-      "wc1files": {
-        "type": "array",
-        "contains": ["string"]
-      },
-      "sum": {
-        "type": "number"
+      "message":{
+      "type": "string",
+      "description":"Output message from VBM step"
       }
-    }
+	}
+
   }
 }

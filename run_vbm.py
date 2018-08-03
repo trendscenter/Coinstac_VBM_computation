@@ -9,10 +9,14 @@ python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "BidsDir":"/computation/test_d
 
 Sample run for input data of nifti paths in text or csv file:
 python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "NiftiPaths":"/computation/test_dir/nifti_paths.txt","WriteDir":"/computation/test_dir/nifti_outputs"}}'
+
+success=True means program finished execution , despite the success or failure of the code
+This is to indicate to coinstac that program finished execution
 """
 
 import ujson as json
-import warnings, os, sys
+import warnings, os, glob, sys
+import nibabel as nib
 
 ## Load Nipype spm interface ##
 from nipype.interfaces import spm
@@ -45,6 +49,13 @@ template_dict = {
     60,
     'vbm_output_dirname':
     'vbm_spm12',
+    'display_image_name':
+    'wc1Re.png',
+    'cut_coords': (0, 0, 0),
+    'display_nifti':
+    'wc1*nii',
+    'qc_nifti':
+    'swc1*nii',
     'vbm_qc_filename':
     'vbm_corr_value.txt',
     'bids_outputs_manual_name':
@@ -90,6 +101,12 @@ vbm_qc_filename is the name of the VBM quality control text file , which is plac
 
 For nifti files , it is assumed that they are T1w (T1 weighted) type of scans
 FWHM_SMOOTH is an optional parameter that can be passed as json in args['input']['opts']
+
+json output description
+                    "displayUserMessage"-This string is used by coinstac to display output message to the user on the UI after computation is finished
+                    "vbmdirs"-Directories where outputs are stored
+                    "wc1files"-location of wc1*nii files for each subject
+                    "complete%"-Indicates how much data is successfully preprocessed
 """
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -128,11 +145,14 @@ def process_bids(args):
             After verifying the BIDS format , the bids_dir and write_dir along with pre-processing specific pipeline options
             are sent to vbm_use_cases_layer for running the pipeline
 
-        """
-    BidsDir = args['input']['BidsDir']
-    WriteDir = args['input']['WriteDir']
+            The foll. args are used for reading from coinstac user directly, but for demo purposes we will read from args['state']['baseDirectory'] and args['state']['outputDirectory']
+            BidsDir = args['input']['BidsDir']
+            WriteDir = args['input']['WriteDir']
+    """
+    BidsDir = args['state']['baseDirectory']
+    WriteDir = args['state']['outputDirectory']
 
-    if 'opts' in args['input']: opts = args['input']['opts']
+    if 'options' in args['input']: opts = args['input']['options']
     else: opts = None
 
     # Check if input_bids_dir is in BIDS format using bids-validator tool
@@ -140,7 +160,7 @@ def process_bids(args):
     bids_process = os.popen(cmd).read()
 
     # Check if the bids dir has T1w data and write permissions to Write dir
-    if bids_process and template_dict['scan_type'] in bids_process and os.access(
+    if template_dict['scan_type'] in bids_process and os.access(
             WriteDir, os.W_OK):
         return vbm_use_cases_layer.execute_pipeline(
             bids_dir=BidsDir,
@@ -150,19 +170,13 @@ def process_bids(args):
             **template_dict)
 
     else:
-        sys.stderr.write(
-            'Incompatible Bids directory format or write directory does not have permissions'
-        )
         return sys.stdout.write(
             json.dumps({
                 "output": {
-                    "vbmdirs": [],
-                    "wc1files": [],
-                    "complete%": 0
+                    "message":
+                    "Incompatible Bids directory format or write directory does not have permissions"
                 },
-                "cache": {
-                    "wc1files": []
-                },
+                "cache": {},
                 "success": True
             }))
 
@@ -200,39 +214,44 @@ def process_niftis(args):
                 After verifying the nifti paths , the paths to nifti files and write_dir along with pre-processing specific pipeline options
                 are sent to vbm_use_cases_layer for running the pipeline
 
+                The foll. args are used for reading from coinstac user directly, but for demo purposes we will read from args['state']['baseDirectory'] and args['state']['outputDirectory']
+                paths_file = args['input']['NiftiPaths']
+                WriteDir = args['input']['WriteDir']
+
             """
+    #Get paths to *.csv or *.txt files
+    nifti_paths_file = (
+        glob.glob(os.path.join(args['state']['baseDirectory'], '*.csv'))
+        or glob.glob(os.path.join(args['state']['baseDirectory'], '*.txt')))[0]
+    WriteDir = args['state']['outputDirectory']
 
-    paths_file = args['input']['NiftiPaths']
-    WriteDir = args['input']['WriteDir']
-
-    if 'opts' in args['input']: opts = args['input']['opts']
+    if 'options' in args['input']: opts = args['input']['options']
     else: opts = None
 
     # Read each line in nifti_paths file into niftis variable
-    niftis = []
-    with open(paths_file, "r") as f:
-        for line in f:
-            niftis.append(line.rstrip(('\n')))
+    count = 0
+    valid_niftis = []
 
-    if os.access(WriteDir, os.W_OK):
+    with open(nifti_paths_file, "r") as f:
+        for each in f:
+            if nib.load(each.rstrip(('\n'))):
+                valid_niftis.append(each.rstrip(('\n')))
+                count += 1
+    if count > 0 and os.access(WriteDir, os.W_OK):
         return vbm_use_cases_layer.execute_pipeline(
-            nii_files=niftis,
+            nii_files=valid_niftis,
             write_dir=WriteDir,
             data_type='nifti',
             pipeline_opts=opts,
             **template_dict)
     else:
-        sys.stderr.write('write directory does not have permissions')
         return sys.stdout.write(
             json.dumps({
                 "output": {
-                    "vbmdirs": [],
-                    "wc1files": [],
-                    "complete%": 0
+                    "message":
+                    "No nifti files found or write directory does not have permissions"
                 },
-                "cache": {
-                    "wc1files": []
-                },
+                "cache": {},
                 "success": True
             }))
 
@@ -255,23 +274,22 @@ if __name__ == '__main__':
     # The following block of code assigns the appropriate pre-processing function for input data format, based on Bids or nifti file paths in text file
     args = json.loads(sys.argv[1])
 
-    if ('BidsDir' in args['input']) and ('WriteDir' in args['input']):
+    nifti_paths_file = glob.glob(
+        os.path.join(args['state']['baseDirectory'], '*.csv')) or glob.glob(
+            os.path.join(args['state']['baseDirectory'], '*.txt'))
+
+    if len(nifti_paths_file) == 0:
         computation_output = process_bids(args)
         sys.stdout.write(computation_output)
-    elif ('NiftiPaths' in args['input']) and ('WriteDir' in args['input']):
+    elif len(nifti_paths_file) == 1:
         computation_output = process_niftis(args)
         sys.stdout.write(computation_output)
     else:
         sys.stdout.write(
             json.dumps({
                 "output": {
-                    "vbmdirs": [],
-                    "wc1files": [],
-                    "complete%": 0
+                    "message": "Cannot read data from json"
                 },
-                "cache": {
-                    "wc1files": []
-                },
+                "cache": {},
                 "success": True
             }))
-        sys.stderr.write('Cannot read data from json')

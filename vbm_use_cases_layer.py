@@ -5,13 +5,13 @@ This layer runs the pre-processing VBM (Voxel Based Morphometry) pipeline based 
 This layer uses entities layer to modify nodes of the pipeline as needed
 """
 
-import sys, os, glob, shutil
+import sys, os, glob, shutil, math, base64
 import ujson as json
 from bids.grabbids import BIDSLayout
 import nibabel as nib
 import nipype.pipeline.engine as pe
 import numpy as np
-import math
+from nilearn import plotting
 
 import vbm_entities_layer
 
@@ -121,6 +121,25 @@ def write_readme_files(write_dir='', data_type=None, **template_dict):
               'w') as fp:
         fp.write(template_dict['qc_readme_content'])
         fp.close()
+
+
+def nii_to_string_converter(nifti, **template_dict):
+    """This function converts nifti to png and encodes binary strings to text strings using Base64 standard alphabet."""
+    write_path = os.path.dirname(nifti)
+    mask = nib.load(nifti)
+    png_img = nib.Nifti1Image(mask.get_data(), mask.affine, mask.header)
+
+    #Save nii to png image
+    plotting.plot_anat(
+        png_img,
+        cut_coords=(0, 0, 0),
+        annotate=False,
+        draw_cross=False,
+        output_file=os.path.join(write_path,
+                                 template_dict['display_image_name']),
+        display_mode='ortho',
+        title=template_dict['display_image_name'],
+        colorbar=False)
 
 
 #Explore corrcoef
@@ -285,7 +304,7 @@ def create_pipeline_nodes(pipeline_opts, **template_dict):
 
     # 5 Modify Pipeline based on opts to update smoothing fwhm ( full width half maximum ) in mm in x,y,z directions
     if pipeline_opts is not None:
-        fwhm = float(pipeline_opts['fwhm'])
+        fwhm = float(pipeline_opts)
         smooth.node.inputs.fwhm = [fwhm] * 3
 
     ## 6 Create the pipeline/workflow and connect the nodes created above ##
@@ -354,12 +373,6 @@ def run_pipeline(write_dir,
     id = 0  # id for assigning sub-id incase of nifti files in txt format
     count_success = 0  # variable for counting how many subjects were successfully run
 
-    # create dirs array to store output directories where vbm spm12 data is written to
-    dirs = list()
-
-    # create wc1files array to store paths to wc1 files for each subject
-    wc1files = list()
-
     for each_sub in smri_data:
 
         try:
@@ -403,27 +416,25 @@ def run_pipeline(write_dir,
                 # Run the nipype pipeline
                 vbm_preprocess.run()
 
-                # Append vbm output dirs and wc1*nii files for json output
-                dirs.append(
-                    os.path.join(vbm_out, template_dict['vbm_output_dirname']))
-                wc1files.append(
-                    glob.glob(
-                        os.path.join(vbm_out,
-                                     template_dict['vbm_output_dirname'],
-                                     "wc1*nii"))[0])
-
                 # Calculate correlation coefficient of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(
                     os.path.join(vbm_out, template_dict['vbm_output_dirname'],
-                                 "swc1*nii"))
+                                 template_dict['qc_nifti']))
                 get_corr(segmented_file[0], **template_dict)
 
                 # Write readme files
                 write_readme_files(write_dir, data_type, **template_dict)
-
+                '''
+                #Convert wc1Re.nii to encoded string for coinstac UI
+                nii_to_string_converter(
+                    glob.glob(
+                        os.path.join(
+                            vbm_out, template_dict['vbm_output_dirname'],
+                            template_dict['display_nifti'])), **template_dict)
+'''
         except Exception as e:
             # If fails raise the exception,print exception error
-            # sys.stderr.write(str(e))
+            sys.stderr.write(str(e))
             continue
 
         else:
@@ -436,21 +447,15 @@ def run_pipeline(write_dir,
     Calculate how many nifti's successfully got run through the pipeline, this may help in colloborative projects
     where some of the projects may have low quality data
     '''
-    completed_percent = (
-        (count_success / len(smri_data)) * 100) if len(smri_data) != 0 else 0
-    '''
-    Status=True means program finished execution , despite the success or failure of the code
-    This is to indicate to coinstac that program finished execution
-    '''
+
+    construct_message = "VBM preprocessing completed. " + str(
+        count_success) + "/" + str(
+            len(smri_data)) + " subjects out of" + " completed successfully."
 
     return json.dumps({
         "output": {
-            "vbmdirs": dirs,
-            "wc1files": wc1files,
-            "%DataPreprocessed": completed_percent
+            "message": construct_message
         },
-        "cache": {
-            "wc1files": wc1files
-        },
+        "cache": {},
         "success": True,
     })
