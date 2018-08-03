@@ -7,3 +7,5 @@ pandas
 duecredit
 patsy
 pydicom>=1.1.0
+nilearn
+sklearn
