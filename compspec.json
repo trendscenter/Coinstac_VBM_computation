@@ -10,7 +10,7 @@
   },
   "computation": {
     "type": "docker",
-    "dockerImage": "vbm_test",
+    "dockerImage": "spanta28/vbm_test",
     "command": [
       "python",
       "\/computation\/run_vbm.py"
