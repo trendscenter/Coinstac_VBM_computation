@@ -10,23 +10,6 @@ RUN yum install -y -q bzip2 ca-certificates curl unzip \
     && yum clean packages \
     && rm -rf /var/cache/yum/* /tmp/* /var/tmp/*
 
-#-------------------------------------------------
-# Install Miniconda, and set up Python environment
-#-------------------------------------------------
-ENV PATH=/opt/miniconda/envs/default/bin:$PATH
-RUN curl -ssL -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    && bash miniconda.sh -b -p /opt/miniconda \
-    && rm -f miniconda.sh \
-    && /opt/miniconda/bin/conda update -n base conda \
-    && /opt/miniconda/bin/conda config --add channels conda-forge \
-    && /opt/miniconda/bin/conda create -y -q -n default python=3.5.1 \
-    	traits pandas \
-#    && conda clean -y --all \
-    && pip install -U -q --no-cache-dir pip \
-    && pip install -q --no-cache-dir \
-    	nipype \
-    && rm -rf /opt/miniconda/[!envs]*
-
 #----------------------
 # Install MCR and SPM12
 #----------------------
