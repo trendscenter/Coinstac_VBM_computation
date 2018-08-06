@@ -450,7 +450,7 @@ def run_pipeline(write_dir,
 
     construct_message = "VBM preprocessing completed. " + str(
         count_success) + "/" + str(
-            len(smri_data)) + " subjects out of" + " completed successfully."
+            len(smri_data)) + " subjects" + " completed successfully."
 
     return json.dumps({
         "output": {
