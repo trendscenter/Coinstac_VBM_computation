@@ -21,15 +21,15 @@ RUN yum install -y -q libXext.x86_64 libXt.x86_64 \
 # Install MATLAB Compiler Runtime
 WORKDIR /opt
 RUN curl -sSL -o mcr.zip https://www.mathworks.com/supportfiles/downloads/R2017a/deployment_files/R2017a/installers/glnxa64/MCR_R2017a_glnxa64_installer.zip \
-RUN unzip -q /opt/MCR_R2017a_glnxa64_installer.zip -d mcrtmp \
+RUN unzip -q /opt/mcr.zip -d mcrtmp \
     && mcrtmp/install -destinationFolder /opt/mcr -mode silent -agreeToLicense yes \
-    && rm -rf mcrtmp /opt/MCR_R2017a_glnxa64_installer.zip /tmp/*
+    && rm -rf mcrtmp /opt/mcr.zip /tmp/*
 
 # Install standalone SPM
 WORKDIR /opt
 RUN curl -sSL -o spm.zip http://www.fil.ion.ucl.ac.uk/spm/download/restricted/utopia/dev/spm12_latest_Linux_R2017a.zip \
-RUN unzip -q /opt/spm12_latest_Linux_R2017a.zip \
-    && rm -rf /opt/spm12_latest_Linux_R2017a.zip \
+RUN unzip -q /opt/spm.zip \
+    && rm -rf /opt/spm.zip \
     && unzip /opt/spm12/spm12.ctf -d /opt/spm12/
 ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
     SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \
