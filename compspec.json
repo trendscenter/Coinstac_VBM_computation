@@ -30,13 +30,10 @@
 },
 
 "BidsDir":{
-"type":"directory",
-"label": "Input Bids Directory"
-},
-
-"WriteDir":{
-"type":"directory",
-"label": "Directory to save outputs"
+"type":"files",
+"count":1,
+"extensions":["json"]
+"label": "Dataset_description.json of Bids Directory"
 }
 
 },
