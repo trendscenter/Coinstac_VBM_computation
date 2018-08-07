@@ -22,6 +22,7 @@
 "options":{
 "type":"number",
 "label": "Smoothing FWHM in mm",
+"default":6,
 "description":"Full width half maximum smoothing kernel value in mm in x,y,z directions"
 },
 
