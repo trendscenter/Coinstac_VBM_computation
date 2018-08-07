@@ -445,7 +445,7 @@ def run_pipeline(write_dir,
             remove_tmp_files()
     
     #Zip output files
-    shutil.make_archive('vbm_outputs', 'zip', write_dir)
+    shutil.make_archive(os.path.join(write_dir,'vbm_outputs'), 'zip', write_dir)
     
     '''
     Calculate how many nifti's successfully got run through the pipeline, this may help in colloborative projects
