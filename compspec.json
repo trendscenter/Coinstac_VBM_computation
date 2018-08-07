@@ -32,7 +32,7 @@
 "BidsDir":{
 "type":"files",
 "count":1,
-"extensions":["json"]
+"extensions":["json"],
 "label": "Dataset_description.json of Bids Directory"
 }
 
