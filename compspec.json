@@ -40,7 +40,8 @@
   
     "output": {
       "image":{
-      "type": "string"
+      "type": "array",
+      "description":"Output wc1 images"
       },
       "message":{
       "type": "string",
