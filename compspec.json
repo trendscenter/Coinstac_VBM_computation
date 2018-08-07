@@ -46,7 +46,11 @@
       "message":{
       "type": "string",
       "description":"Output message from VBM step"
-      }
+      },
+	    "download_outputs":{
+		    "type":"string",
+		    "description":"Download vbm outputs here"
+	    }
 	}
 
   }
