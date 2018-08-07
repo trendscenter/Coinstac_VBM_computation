@@ -446,6 +446,7 @@ def run_pipeline(write_dir,
     
     #Zip output files
     shutil.make_archive(os.path.join(write_dir,'vbm_outputs'), 'zip', write_dir)
+    download_outputs_path=os.path.join(write_dir,'vbm_outputs.zip')
     
     '''
     Calculate how many nifti's successfully got run through the pipeline, this may help in colloborative projects
@@ -459,7 +460,7 @@ def run_pipeline(write_dir,
     return json.dumps({
         "output": {
             "message": construct_message,
-            "download_outputs":"vbm_outputs.zip"
+            "download_outputs":download_outputs_path
         },
         "cache": {},
         "success": True,
