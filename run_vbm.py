@@ -49,11 +49,15 @@ template_dict = {
     60,
     'vbm_output_dirname':
     'vbm_spm12',
+    'output_zip_dir':
+    'vbm_outputs',
     'display_image_name':
     'wc1Re.png',
+    'display_pngimage_name':
+    'Gray matter (Normalized)',
     'cut_coords': (0, 0, 0),
     'display_nifti':
-    'wc1*nii',
+    'wc1Re.nii',
     'qc_nifti':
     'swc1*nii',
     'vbm_qc_filename':

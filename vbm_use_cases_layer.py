@@ -14,6 +14,7 @@ import numpy as np
 from nilearn import plotting
 
 import vbm_entities_layer
+import nii_to_string_converter
 
 
 def execute_pipeline(bids_dir='',
@@ -121,25 +122,6 @@ def write_readme_files(write_dir='', data_type=None, **template_dict):
               'w') as fp:
         fp.write(template_dict['qc_readme_content'])
         fp.close()
-
-
-def nii_to_string_converter(nifti, **template_dict):
-    """This function converts nifti to png and encodes binary strings to text strings using Base64 standard alphabet."""
-    write_path = os.path.dirname(nifti)
-    mask = nib.load(nifti)
-    png_img = nib.Nifti1Image(mask.get_data(), mask.affine, mask.header)
-
-    #Save nii to png image
-    plotting.plot_anat(
-        png_img,
-        cut_coords=(0, 0, 0),
-        annotate=False,
-        draw_cross=False,
-        output_file=os.path.join(write_path,
-                                 template_dict['display_image_name']),
-        display_mode='ortho',
-        title=template_dict['display_image_name'],
-        colorbar=False)
 
 
 #Explore corrcoef
@@ -372,6 +354,7 @@ def run_pipeline(write_dir,
 
     id = 0  # id for assigning sub-id incase of nifti files in txt format
     count_success = 0  # variable for counting how many subjects were successfully run
+    write_dir = write_dir + '/' + template_dict['output_zip_dir']  # Store outputs in this directory for zipping the directory
 
     for each_sub in smri_data:
 
@@ -424,14 +407,7 @@ def run_pipeline(write_dir,
 
                 # Write readme files
                 write_readme_files(write_dir, data_type, **template_dict)
-                '''
-                #Convert wc1Re.nii to encoded string for coinstac UI
-                nii_to_string_converter(
-                    glob.glob(
-                        os.path.join(
-                            vbm_out, template_dict['vbm_output_dirname'],
-                            template_dict['display_nifti'])), **template_dict)
-'''
+
         except Exception as e:
             # If fails raise the exception,print exception error
             sys.stderr.write(str(e))
@@ -443,11 +419,15 @@ def run_pipeline(write_dir,
 
         finally:
             remove_tmp_files()
-    
+
     #Zip output files
-    shutil.make_archive(os.path.join(write_dir,'vbm_outputs'), 'zip', write_dir)
-    download_outputs_path=os.path.join(write_dir,'vbm_outputs.zip')
-    
+    shutil.make_archive(
+        os.path.join(
+            os.path.dirname(write_dir), template_dict['output_zip_dir']),
+        'zip', write_dir)
+    download_outputs_path = write_dir + '.zip'
+
+    shutil.rmtree(write_dir, ignore_errors=True)
     '''
     Calculate how many nifti's successfully got run through the pipeline, this may help in colloborative projects
     where some of the projects may have low quality data
@@ -460,7 +440,7 @@ def run_pipeline(write_dir,
     return json.dumps({
         "output": {
             "message": construct_message,
-            "download_outputs":download_outputs_path
+            "download_outputs": download_outputs_path
         },
         "cache": {},
         "success": True,
