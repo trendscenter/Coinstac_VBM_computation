@@ -14,8 +14,6 @@ import numpy as np
 from nilearn import plotting
 
 import vbm_entities_layer
-import nii_to_string_converter
-
 
 def execute_pipeline(bids_dir='',
                      write_dir='',
