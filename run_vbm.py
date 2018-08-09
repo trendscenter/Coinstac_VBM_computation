@@ -156,7 +156,7 @@ def process_bids(args):
     BidsDir = args['state']['baseDirectory']
     WriteDir = args['state']['outputDirectory']
 
-    if 'options' in args['input']: opts = args['input']['options']
+    if ('options' in args['input']) and (args['input']['options']) : opts = args['input']['options']
     else: opts = None
 
     # Check if input_bids_dir is in BIDS format using bids-validator tool
@@ -229,7 +229,7 @@ def process_niftis(args):
         or glob.glob(os.path.join(args['state']['baseDirectory'], '*.txt')))[0]
     WriteDir = args['state']['outputDirectory']
 
-    if 'options' in args['input']: opts = args['input']['options']
+    if ('options' in args['input']) and (args['input']['options']) : opts = args['input']['options']
     else: opts = None
 
     # Read each line in nifti_paths file into niftis variable
