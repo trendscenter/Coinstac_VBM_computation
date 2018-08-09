@@ -50,6 +50,10 @@
 	    "download_outputs":{
 		    "type":"string",
 		    "description":"Download vbm outputs here"
+	    },
+	    "display_image_path":{
+		    "type":"string",
+		    "description":"Display image"
 	    }
 	}
 
