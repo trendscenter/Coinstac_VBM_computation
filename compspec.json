@@ -37,7 +37,7 @@
       },
       "output":{
          "image":{
-            "type":"array",
+            "type":"string",
             "label":"Output wc1 images"
          },
          "message":{
