@@ -378,7 +378,7 @@ def run_pipeline(write_dir,
     id = 0  # id for assigning sub-id incase of nifti files in txt format
     count_success = 0  # variable for counting how many subjects were successfully run
     write_dir = write_dir + '/' + template_dict['output_zip_dir']  # Store outputs in this directory for zipping the directory
-    image_string = ''  # string for storing byte base 64 string of output gray matter image
+
     for each_sub in smri_data:
 
         try:
