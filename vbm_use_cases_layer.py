@@ -477,8 +477,7 @@ def run_pipeline(write_dir,
         "output": {
             "message": construct_message,
             "download_outputs": download_outputs_path,
-            "display_image_path": png_image_path,
-            "image": image_string
+            "display_image_path": png_image_path
         },
         "cache": {},
         "success": True,
