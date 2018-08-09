@@ -15,6 +15,7 @@ from nilearn import plotting
 
 import vbm_entities_layer
 
+
 def execute_pipeline(bids_dir='',
                      write_dir='',
                      nii_files='',
@@ -120,6 +121,30 @@ def write_readme_files(write_dir='', data_type=None, **template_dict):
               'w') as fp:
         fp.write(template_dict['qc_readme_content'])
         fp.close()
+
+
+def nii_to_string_converter(write_dir, sub_id, **template_dict):
+    """This function converts nifti to base64 string"""
+    import nibabel as nib
+    from nilearn import plotting
+    import os, base64
+
+    file = os.path.join(write_dir, template_dict['display_nifti'])
+
+    mask = nib.load(file)
+    new_data = mask.get_data()
+    clipped_img = nib.Nifti1Image(new_data, mask.affine, mask.header)
+
+    plotting.plot_anat(
+        clipped_img,
+        cut_coords=(0, 0, 0),
+        annotate=False,
+        draw_cross=False,
+        output_file=os.path.join(write_dir,
+                                 template_dict['display_image_name']),
+        display_mode='ortho',
+        title=sub_id + ' ' + template_dict['display_pngimage_name'],
+        colorbar=False)
 
 
 #Explore corrcoef
@@ -353,7 +378,7 @@ def run_pipeline(write_dir,
     id = 0  # id for assigning sub-id incase of nifti files in txt format
     count_success = 0  # variable for counting how many subjects were successfully run
     write_dir = write_dir + '/' + template_dict['output_zip_dir']  # Store outputs in this directory for zipping the directory
-
+    image_string = ''  # string for storing byte base 64 string of output gray matter image
     for each_sub in smri_data:
 
         try:
@@ -406,6 +431,10 @@ def run_pipeline(write_dir,
                 # Write readme files
                 write_readme_files(write_dir, data_type, **template_dict)
 
+                nii_to_string_converter(
+                    os.path.join(vbm_out, template_dict['vbm_output_dirname']),
+                    sub_id, **template_dict)
+
         except Exception as e:
             # If fails raise the exception,print exception error
             sys.stderr.write(str(e))
@@ -414,6 +443,12 @@ def run_pipeline(write_dir,
         else:
             # If the try block succeeds, increase the count
             count_success = count_success + 1
+
+            if count_success == 1:
+                shutil.copy(
+                    os.path.join(vbm_out, template_dict['vbm_output_dirname'],
+                                 template_dict['display_image_name']),
+                    os.path.dirname(write_dir))
 
         finally:
             remove_tmp_files()
@@ -435,10 +470,15 @@ def run_pipeline(write_dir,
         count_success) + "/" + str(
             len(smri_data)) + " subjects" + " completed successfully."
 
+    png_image_path = os.path.join(
+        os.path.dirname(write_dir), template_dict['display_image_name'])
+
     return json.dumps({
         "output": {
             "message": construct_message,
-            "download_outputs": download_outputs_path
+            "download_outputs": download_outputs_path,
+            "display_image_path": png_image_path,
+            "image": image_string
         },
         "cache": {},
         "success": True,
