@@ -29,7 +29,7 @@
             "description":"Full width half maximum smoothing kernel value in x,y,z directions"
          },
          "data": {
-           "label": "Data",
+           "label": "T1w Nifti file",
            "type": "files",
            "count": 1,
            "extensions": [[".nii",".nii.gz"]]
