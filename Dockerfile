@@ -48,9 +48,9 @@ RUN curl -sSL -o spm.zip http://www.fil.ion.ucl.ac.uk/spm/download/restricted/ut
     && unzip -q spm.zip \	RUN unzip -q /computation/softwares/spm_install/spm12_latest_Linux_R2017a.zip \
     && rm -rf spm.zip \	
     && unzip /opt/spm12/spm12.ctf -d /opt/spm12/	    && unzip /opt/spm12/spm12.ctf -d /opt/spm12/
-ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \	ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
-    SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \	    SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \
-    FORCE_SPMMCR=1 \	    FORCE_SPMMCR=1 \
+ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \	
+    SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \	   
+    FORCE_SPMMCR=1 \	    
     LD_LIBRARY_PATH=/opt/mcr/v*/runtime/glnxa64:/opt/mcr/v*/bin/glnxa64:/opt/mcr/v*/sys/os/glnxa64:$LD_LIBRARY_PATH
     
 # Install Bids Validator using npm
