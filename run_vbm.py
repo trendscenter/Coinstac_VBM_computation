@@ -4,19 +4,15 @@
 This layer includes the interface adapter(IA) for parsing json args to read ni pre-processing structural T1w scans (accepts BIDS format)
 This layer sends the output to vbm_use_cases_layer with the appropriate inputs to run the pipeine using nipype interface
 
-Sample run for bids input data:
-python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "BidsDir":"/computation/test_dir/bids_input_data","WriteDir":"/computation/test_dir/bids_output"}}'
-
-Sample run for input data of nifti paths in text or csv file:
-python3 run_vbm.py '{"input":{"opts":{"fwhm": 7}, "NiftiPaths":"/computation/test_dir/nifti_paths.txt","WriteDir":"/computation/test_dir/nifti_outputs"}}'
-
 success=True means program finished execution , despite the success or failure of the code
 This is to indicate to coinstac that program finished execution
 """
 
 import ujson as json
-import warnings, os, glob, sys
+import warnings, os, glob, sys, shutil
 import nibabel as nib
+
+from bids.grabbids import BIDSLayout
 
 ## Load Nipype spm interface ##
 from nipype.interfaces import spm
@@ -42,7 +38,7 @@ template_dict = {
     os.path.join('/computation', 'transform.mat'),
     'scan_type':
     'T1w',
-    'FWHM_SMOOTH': [6, 6, 6],
+    'FWHM_SMOOTH': [10, 10, 10],
     'BIAS_REGULARISATION':
     0.0001,
     'FWHM_GAUSSIAN_SMOOTH_BIAS':
@@ -113,7 +109,7 @@ json output description
                     "complete%"-Indicates how much data is successfully preprocessed
 """
 with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
+    warnings.filterwarnings("ignore")
 
 
 def process_bids(args):
@@ -153,36 +149,20 @@ def process_bids(args):
             BidsDir = args['input']['BidsDir']
             WriteDir = args['input']['WriteDir']
     """
-    BidsDir = args['state']['baseDirectory']
+    BidsDir = args['input']['data']
     WriteDir = args['state']['outputDirectory']
 
-    if ('options' in args['input']) and (args['input']['options']) : opts = args['input']['options']
-    else: opts = None
-
-    # Check if input_bids_dir is in BIDS format using bids-validator tool
-    cmd = "bids-validator {0}".format(BidsDir)
-    bids_process = os.popen(cmd).read()
-
-    # Check if the bids dir has T1w data and write permissions to Write dir
-    if template_dict['scan_type'] in bids_process and os.access(
-            WriteDir, os.W_OK):
-        return vbm_use_cases_layer.execute_pipeline(
-            bids_dir=BidsDir,
-            write_dir=WriteDir,
-            data_type='bids',
-            pipeline_opts=opts,
-            **template_dict)
-
+    if ('options' in args['input']) and (args['input']['options']):
+        opts = args['input']['options']
     else:
-        return sys.stdout.write(
-            json.dumps({
-                "output": {
-                    "message":
-                    "Incompatible Bids directory format or write directory does not have permissions"
-                },
-                "cache": {},
-                "success": True
-            }))
+        opts = None
+
+    return vbm_use_cases_layer.execute_pipeline(
+        bids_dir=BidsDir,
+        write_dir=WriteDir,
+        data_type='bids',
+        pipeline_opts=opts,
+        **template_dict)
 
 
 def process_niftis(args):
@@ -229,8 +209,10 @@ def process_niftis(args):
         or glob.glob(os.path.join(args['state']['baseDirectory'], '*.txt')))[0]
     WriteDir = args['state']['outputDirectory']
 
-    if ('options' in args['input']) and (args['input']['options']) : opts = args['input']['options']
-    else: opts = None
+    if ('options' in args['input']) and (args['input']['options']):
+        opts = args['input']['options']
+    else:
+        opts = None
 
     # Read each line in nifti_paths file into niftis variable
     count = 0
@@ -276,23 +258,28 @@ if __name__ == '__main__':
         raise EnvironmentError("spm unable to start in vbm docker")
 
     # The following block of code assigns the appropriate pre-processing function for input data format, based on Bids or nifti file paths in text file
-    args = json.loads(sys.argv[1])
+    args = json.loads(sys.stdin.read())
 
-    nifti_paths_file = glob.glob(
-        os.path.join(args['state']['baseDirectory'], '*.csv')) or glob.glob(
-            os.path.join(args['state']['baseDirectory'], '*.txt'))
+    BidsDir = args['input']['data']
+    WriteDir = args['state']['outputDirectory']
 
-    if len(nifti_paths_file) == 0:
+    # Check if data is in BIDS format and has T1w
+    layout = BIDSLayout(BidsDir)
+    smri_data = layout.get(
+        type=template_dict['scan_type'], extensions='.nii.gz')
+
+    if (len(smri_data) > 0) and os.access(WriteDir, os.W_OK):
         computation_output = process_bids(args)
         sys.stdout.write(computation_output)
-    elif len(nifti_paths_file) == 1:
+    elif (len(smri_data) == 0) and os.access(WriteDir, os.W_OK):
         computation_output = process_niftis(args)
         sys.stdout.write(computation_output)
     else:
         sys.stdout.write(
             json.dumps({
                 "output": {
-                    "message": "Cannot read data from json"
+                    "message":
+                    "Bids data not found or can not write to target directory"
                 },
                 "cache": {},
                 "success": True

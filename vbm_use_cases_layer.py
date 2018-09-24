@@ -5,7 +5,9 @@ This layer runs the pre-processing VBM (Voxel Based Morphometry) pipeline based 
 This layer uses entities layer to modify nodes of the pipeline as needed
 """
 
-import sys, os, glob, shutil, math, base64
+import sys, os, glob, shutil, math, base64, warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore")
 import ujson as json
 from bids.grabbids import BIDSLayout
 import nibabel as nib
@@ -54,8 +56,9 @@ def execute_pipeline(bids_dir='',
     if data_type == 'bids':
         # Runs the pipeline on each subject, this algorithm runs serially
         layout = BIDSLayout(bids_dir)
-        smri_data = layout.get(extensions=template_dict['scan_type'] +
-                               '.nii.gz')
+        smri_data = layout.get(
+            type=template_dict['scan_type'], extensions='.nii.gz')
+
         return run_pipeline(
             write_dir,
             smri_data,
@@ -64,6 +67,7 @@ def execute_pipeline(bids_dir='',
             vbm_preprocess,
             data_type='bids',
             **template_dict)
+
     elif data_type == 'nifti':
         # Runs the pipeline on each nifti file, this algorithm runs serially
         smri_data = nii_files
@@ -80,16 +84,17 @@ def execute_pipeline(bids_dir='',
 def remove_tmp_files():
     """this function removes any tmp files in the docker"""
 
-    shutil.rmtree('/var/tmp/*', ignore_errors=True)
+    for a in glob.glob('/var/tmp/*'):
+        os.remove(a)
 
-    for c in glob.glob(os.getcwd() + '/crash*'):
-        os.remove(c)
+    for b in glob.glob(os.getcwd() + '/crash*'):
+        os.remove(b)
 
-    for f in glob.glob(os.getcwd() + '/tmp*'):
-        shutil.rmtree(f, ignore_errors=True)
+    for c in glob.glob(os.getcwd() + '/tmp*'):
+        shutil.rmtree(c, ignore_errors=True)
 
-    for f in glob.glob(os.getcwd() + '/__pycache__'):
-        shutil.rmtree(f, ignore_errors=True)
+    for d in glob.glob(os.getcwd() + '/__pycache__'):
+        shutil.rmtree(d, ignore_errors=True)
 
     shutil.rmtree(os.getcwd() + '/vbm_preprocess', ignore_errors=True)
 
@@ -123,7 +128,7 @@ def write_readme_files(write_dir='', data_type=None, **template_dict):
         fp.close()
 
 
-def nii_to_string_converter(write_dir, sub_id, **template_dict):
+def nii_to_string_converter(write_dir, label, **template_dict):
     """This function converts nifti to base64 string"""
     import nibabel as nib
     from nilearn import plotting
@@ -143,11 +148,11 @@ def nii_to_string_converter(write_dir, sub_id, **template_dict):
         output_file=os.path.join(write_dir,
                                  template_dict['display_image_name']),
         display_mode='ortho',
-        title=sub_id + ' ' + template_dict['display_pngimage_name'],
+        title=label + ' ' + template_dict['display_pngimage_name'],
         colorbar=False)
 
 
-#Explore corrcoef
+#Compute corrcoef
 def get_corr(segmented_file, **template_dict):
     """This function computes correlation value of the swc1*nii file with spm12/tpm/TPM.nii file from SPM12 toolbox """
 
@@ -386,6 +391,13 @@ def run_pipeline(write_dir,
             # Extract subject id and name of nifti file
             if data_type == 'bids':
                 sub_id = 'sub-' + each_sub.subject
+                session_id = getattr(each_sub, 'session', None)
+
+                if session_id is not None:
+                    session = 'ses-' + getattr(each_sub, 'session', None)
+                else:
+                    session = ''
+
                 nii_output = ((
                     each_sub.filename).split('/')[-1]).split('.gz')[0]
                 n1_img = nib.load(each_sub.filename)
@@ -397,7 +409,7 @@ def run_pipeline(write_dir,
                 n1_img = nib.load(each_sub)
 
             # Directory in which vbm outputs will be written
-            vbm_out = os.path.join(write_dir, sub_id, 'anat')
+            vbm_out = os.path.join(write_dir, sub_id, session, 'anat')
 
             # Create output dir for sub_id
             os.makedirs(vbm_out, exist_ok=True)
@@ -431,9 +443,10 @@ def run_pipeline(write_dir,
                 # Write readme files
                 write_readme_files(write_dir, data_type, **template_dict)
 
+                label = sub_id + session
                 nii_to_string_converter(
                     os.path.join(vbm_out, template_dict['vbm_output_dirname']),
-                    sub_id, **template_dict)
+                    label, **template_dict)
 
         except Exception as e:
             # If fails raise the exception,print exception error
@@ -458,13 +471,14 @@ def run_pipeline(write_dir,
         os.path.join(
             os.path.dirname(write_dir), template_dict['output_zip_dir']),
         'zip', write_dir)
+
     download_outputs_path = write_dir + '.zip'
 
     shutil.rmtree(write_dir, ignore_errors=True)
     '''
     Calculate how many nifti's successfully got run through the pipeline, this may help in colloborative projects
     where some of the projects may have low quality data
-    '''
+   '''
 
     construct_message = "VBM preprocessing completed. " + str(
         count_success) + "/" + str(
@@ -473,12 +487,19 @@ def run_pipeline(write_dir,
     png_image_path = os.path.join(
         os.path.dirname(write_dir), template_dict['display_image_name'])
 
+    with open(
+            os.path.join(
+                os.path.dirname(write_dir),
+                template_dict['display_image_name']), "rb") as imageFile:
+        encoded_image_str = base64.b64encode(imageFile.read())
+
     return json.dumps({
         "output": {
             "message": construct_message,
             "download_outputs": download_outputs_path,
-            "display_image_path": png_image_path
+            "display_image_path": png_image_path,
+            "display": encoded_image_str
         },
         "cache": {},
-        "success": True,
+        "success": True
     })
