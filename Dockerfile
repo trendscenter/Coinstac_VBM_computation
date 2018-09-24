@@ -46,7 +46,8 @@ RUN curl -sSL -o mcr.zip https://www.mathworks.com/supportfiles/downloads/R2017a
 WORKDIR /opt
 RUN curl -sSL -o spm.zip http://www.fil.ion.ucl.ac.uk/spm/download/restricted/utopia/dev/spm12_latest_Linux_R2017a.zip \
     && unzip -q spm.zip \
-    && rm -rf spm.zip
+    && rm -rf spm.zip \
+    && unzip /opt/spm12/spm12.ctf -d /opt/spm12/
 ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
     SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \
     FORCE_SPMMCR=1 \
