@@ -2,7 +2,7 @@ ujson
 nibabel
 pybids
 nipype
-numpy
+numpy==1.15.1
 pandas
 duecredit
 patsy
