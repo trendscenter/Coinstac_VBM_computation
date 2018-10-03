@@ -30,9 +30,7 @@
 },
 
 "data":{
-"type":"files",
-"count":1,
-"extensions":["json"],
+"type":"string",
 "label": "Dataset_description.json of Bids Directory"
 }
 
