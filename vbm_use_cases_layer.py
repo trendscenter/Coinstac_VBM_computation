@@ -4,6 +4,34 @@
 This layer runs the pre-processing VBM (Voxel Based Morphometry) pipeline based on the inputs from interface adapter layer
 This layer uses entities layer to modify nodes of the pipeline as needed
 """
+import contextlib
+
+
+@contextlib.contextmanager
+def stdchannel_redirected(stdchannel, dest_filename):
+    """
+    A context manager to temporarily redirect stdout or stderr
+
+    e.g.:
+
+
+    with stdchannel_redirected(sys.stderr, os.devnull):
+        if compiler.has_function('clock_gettime', libraries=['rt']):
+            libraries.append('rt')
+    """
+
+    try:
+        oldstdchannel = os.dup(stdchannel.fileno())
+        dest_file = open(dest_filename, 'w')
+        os.dup2(dest_file.fileno(), stdchannel.fileno())
+
+        yield
+    finally:
+        if oldstdchannel is not None:
+            os.dup2(oldstdchannel, stdchannel.fileno())
+        if dest_file is not None:
+            dest_file.close()
+
 
 import sys, os, glob, shutil, math, base64, warnings
 with warnings.catch_warnings():
@@ -16,6 +44,10 @@ import numpy as np
 from nilearn import plotting
 
 import vbm_entities_layer
+
+#Stop printing nipype.workflow info to stdout
+from nipype import logging
+logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
 
 def execute_pipeline(bids_dir='',
@@ -67,7 +99,6 @@ def execute_pipeline(bids_dir='',
             vbm_preprocess,
             data_type='bids',
             **template_dict)
-
     elif data_type == 'nifti':
         # Runs the pipeline on each nifti file, this algorithm runs serially
         smri_data = nii_files
@@ -156,7 +187,7 @@ def nii_to_string_converter(write_dir, label, **template_dict):
 def get_corr(segmented_file, **template_dict):
     """This function computes correlation value of the swc1*nii file with spm12/tpm/TPM.nii file from SPM12 toolbox """
 
-    def get_data(file):
+    def extract_data(file):
         a_data = nib.load(file)
         t_data = a_data.get_data()
         if len(t_data.shape) == 4:
@@ -169,8 +200,8 @@ def get_corr(segmented_file, **template_dict):
         stn_data = np.nan_to_num(stn_data)
         return stn_data
 
-    cstn_data = get_data(template_dict['tpm_path'])
-    cre_data = get_data(segmented_file)
+    cstn_data = extract_data(template_dict['tpm_path'])
+    cre_data = extract_data(segmented_file)
     indices = np.logical_and(cstn_data != 0, cre_data != 0)
     fcstn_data, fcre_data = cstn_data[indices], cre_data[indices]
 
@@ -432,7 +463,8 @@ def run_pipeline(write_dir,
                 datasink.node.inputs.base_directory = vbm_out
 
                 # Run the nipype pipeline
-                vbm_preprocess.run()
+                with stdchannel_redirected(sys.stderr, os.devnull):
+                    vbm_preprocess.run()
 
                 # Calculate correlation coefficient of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(
@@ -472,20 +504,13 @@ def run_pipeline(write_dir,
             os.path.dirname(write_dir), template_dict['output_zip_dir']),
         'zip', write_dir)
 
-    download_outputs_path = write_dir + '.zip'
-
     shutil.rmtree(write_dir, ignore_errors=True)
-    '''
-    Calculate how many nifti's successfully got run through the pipeline, this may help in colloborative projects
-    where some of the projects may have low quality data
-   '''
+
+    download_outputs_path = write_dir + '.zip'
 
     construct_message = "VBM preprocessing completed. " + str(
         count_success) + "/" + str(
             len(smri_data)) + " subjects" + " completed successfully."
-
-    png_image_path = os.path.join(
-        os.path.dirname(write_dir), template_dict['display_image_name'])
 
     with open(
             os.path.join(
@@ -497,7 +522,6 @@ def run_pipeline(write_dir,
         "output": {
             "message": construct_message,
             "download_outputs": download_outputs_path,
-            "display_image_path": png_image_path,
             "display": encoded_image_str
         },
         "cache": {},

@@ -6,8 +6,13 @@ This layer defines the nodes of pre-processing pipeline and correlation computat
 
 import nipype.pipeline.engine as pe
 import nipype.interfaces.spm as spm
+spm.terminal_output = 'file'
 from nipype.interfaces.io import DataSink
 from nipype.interfaces.utility import Function
+
+#Stop printing nipype.workflow info to stdout
+from nipype import logging
+logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
 
 ## 1 Reorientation node & settings ##
