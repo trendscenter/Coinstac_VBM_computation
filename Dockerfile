@@ -3,7 +3,7 @@ FROM centos:7
 WORKDIR /computation
 ADD . /computation
 
-#----------------------------
+#---------------`------------
 # Install common dependencies
 #----------------------------
 RUN yum install -y -q bzip2 ca-certificates curl unzip \
@@ -37,15 +37,15 @@ RUN yum install -y -q libXext.x86_64 libXt.x86_64 \
 
 # Install MATLAB Compiler Runtime
 WORKDIR /opt
-#RUN curl -sSL -o mcr.zip https://www.mathworks.com/supportfiles/downloads/R2017a/deployment_files/R2017a/installers/glnxa64/MCR_R2017a_glnxa64_installer.zip \
-RUN unzip -q /computation/softwares/mcr_install/MCR_R2017a_glnxa64_installer.zip -d mcrtmp \
+RUN curl -sSL -o mcr.zip https://www.mathworks.com/supportfiles/downloads/R2017a/deployment_files/R2017a/installers/glnxa64/MCR_R2017a_glnxa64_installer.zip \
+RUN unzip -q /opt/mcr.zip -d mcrtmp \
     && mcrtmp/install -destinationFolder /opt/mcr -mode silent -agreeToLicense yes \
-    && rm -rf mcrtmp /computation/softwares/mcr_install /tmp/*
+    && rm -rf mcrtmp /tmp/*
 
 # Install standalone SPM
 WORKDIR /opt
-#RUN curl -sSL -o spm.zip http://www.fil.ion.ucl.ac.uk/spm/download/restricted/utopia/dev/spm12_latest_Linux_R2017a.zip \
-RUN unzip -q /computation/softwares/spm_install/spm12_latest_Linux_R2017a.zip \
+RUN curl -sSL -o spm.zip http://www.fil.ion.ucl.ac.uk/spm/download/restricted/utopia/dev/spm12_latest_Linux_R2017a.zip \
+RUN unzip -q /opt/spm.zip \
     && unzip /opt/spm12/spm12.ctf -d /opt/spm12/
 ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
     SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \
