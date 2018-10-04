@@ -10,6 +10,7 @@ RUN yum install -y -q bzip2 ca-certificates curl unzip \
     && yum clean packages \
     && rm -rf /var/cache/yum/* /tmp/* /var/tmp/*
 
+
 #-------------------------------------------------
 # Install Miniconda, and set up Python environment
 #-------------------------------------------------
@@ -37,16 +38,17 @@ RUN yum install -y -q libXext.x86_64 libXt.x86_64 \
 
 # Install MATLAB Compiler Runtime
 WORKDIR /opt
-RUN curl -sSL -o mcr.zip https://www.mathworks.com/supportfiles/downloads/R2017a/deployment_files/R2017a/installers/glnxa64/MCR_R2017a_glnxa64_installer.zip \
-RUN unzip -q /opt/mcr.zip -d mcrtmp \
+RUN curl -sSL -o mcr.zip https://www.mathworks.com/supportfiles/downloads/R2018b/deployment_files/R2018b/installers/glnxa64/MCR_R2018b_glnxa64_installer.zip \
+    && unzip -q mcr.zip -d mcrtmp \
     && mcrtmp/install -destinationFolder /opt/mcr -mode silent -agreeToLicense yes \
-    && rm -rf mcrtmp /tmp/*
+    && rm -rf mcrtmp mcr.zip /tmp/*
 
-# Install standalone SPM
+ # Install standalone SPM
 WORKDIR /opt
-RUN curl -sSL -o spm.zip http://www.fil.ion.ucl.ac.uk/spm/download/restricted/utopia/dev/spm12_latest_Linux_R2017a.zip \
-RUN unzip -q /opt/spm.zip \
-    && unzip /opt/spm12/spm12.ctf -d /opt/spm12/
+RUN curl -sSL -o spm.zip http://www.fil.ion.ucl.ac.uk/spm/download/restricted/utopia/dev/spm12_latest_Linux_R2018b.zip \
+    && unzip -q spm.zip \
+    && unzip /opt/spm12/spm12.ctf -d /opt/spm12/ \
+    && rm -rf spm.zip
 ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
     SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \
     FORCE_SPMMCR=1 \

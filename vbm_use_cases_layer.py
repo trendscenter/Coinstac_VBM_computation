@@ -414,6 +414,7 @@ def run_pipeline(write_dir,
     id = 0  # id for assigning sub-id incase of nifti files in txt format
     count_success = 0  # variable for counting how many subjects were successfully run
     write_dir = write_dir + '/' + template_dict['output_zip_dir']  # Store outputs in this directory for zipping the directory
+    error_log = dict()  # Dictionary for storing error log for each subject
 
     for each_sub in smri_data:
 
@@ -482,7 +483,8 @@ def run_pipeline(write_dir,
 
         except Exception as e:
             # If fails raise the exception,print exception error
-            sys.stderr.write(str(e))
+            #sys.stderr.write(str(e))
+            error_log.update({sub_id: str(e)})
             continue
 
         else:
@@ -504,13 +506,16 @@ def run_pipeline(write_dir,
             os.path.dirname(write_dir), template_dict['output_zip_dir']),
         'zip', write_dir)
 
-    shutil.rmtree(write_dir, ignore_errors=True)
+    #shutil.rmtree(write_dir, ignore_errors=True)
 
     download_outputs_path = write_dir + '.zip'
 
-    construct_message = "VBM preprocessing completed. " + str(
+    output_message = "VBM preprocessing completed. " + str(
         count_success) + "/" + str(
             len(smri_data)) + " subjects" + " completed successfully."
+
+    if bool(error_log):
+        output_message = output_message + "\n" + str(error_log)
 
     with open(
             os.path.join(
@@ -520,7 +525,7 @@ def run_pipeline(write_dir,
 
     return json.dumps({
         "output": {
-            "message": construct_message,
+            "message": output_message,
             "download_outputs": download_outputs_path,
             "display": encoded_image_str
         },
