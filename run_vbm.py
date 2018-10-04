@@ -177,8 +177,7 @@ def process_bids(args):
             BidsDir = args['input']['BidsDir']
             WriteDir = args['input']['WriteDir']
     """
-    #BidsDir = args['input']['data']
-    BidsDir = args['state']['baseDirectory']
+    BidsDir = args['input']['data']
     WriteDir = args['state']['outputDirectory']
 
     if ('options' in args['input']) and (args['input']['options']):
@@ -289,8 +288,7 @@ if __name__ == '__main__':
     # The following block of code assigns the appropriate pre-processing function for input data format, based on Bids or nifti file paths in text file
     args = json.loads(sys.stdin.read())
 
-    #BidsDir = args['input']['data']
-    BidsDir = args['state']['baseDirectory']
+    BidsDir = args['input']['data']
     WriteDir = args['state']['outputDirectory']
 
     # Check if data is in BIDS format and has T1w
