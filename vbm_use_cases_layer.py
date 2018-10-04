@@ -515,7 +515,7 @@ def run_pipeline(write_dir,
             len(smri_data)) + " subjects" + " completed successfully."
 
     if bool(error_log):
-        output_message = output_message + "\n" + str(error_log)
+        output_message = output_message + " Error log:" + str(error_log)
 
     with open(
             os.path.join(
