@@ -4,6 +4,12 @@
 This layer includes the interface adapter(IA) for parsing json args to read ni pre-processing structural T1w scans (accepts BIDS format)
 This layer sends the output to vbm_use_cases_layer with the appropriate inputs to run the pipeine using nipype interface
 
+Sample run for bids input data:
+python3 run_fmri.py '{"input":{"opts":{"fwhm": 7}, "data":"/computation/test_dir/bids_input_data"}}'
+
+Sample run for input data of nifti paths in text or csv file:
+python3 run_fmri.py '{"input":{"opts":{"fwhm": 7}, "NiftiPaths":"/computation/test_dir/nifti_paths.txt"}}'
+
 success=True means program finished execution , despite the success or failure of the code
 This is to indicate to coinstac that program finished execution
 """
@@ -131,10 +137,9 @@ For nifti files , it is assumed that they are T1w (T1 weighted) type of scans
 FWHM_SMOOTH is an optional parameter that can be passed as json in args['input']['opts']
 
 json output description
-                    "displayUserMessage"-This string is used by coinstac to display output message to the user on the UI after computation is finished
-                    "vbmdirs"-Directories where outputs are stored
-                    "wc1files"-location of wc1*nii files for each subject
-                    "complete%"-Indicates how much data is successfully preprocessed
+                    "message"-This string is used by coinstac to display output message to the user on the UI after computation is finished
+                    "download_outputs"-Zipped directory where outputs are stored
+                    "display"-base64 encoded string of segmented gray matter normalized output nifti
 """
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
@@ -144,12 +149,12 @@ def process_bids(args):
     """Runs the pre-processing pipeline on structural T1w scans in BIDS data
         Args:
             args (dictionary): {"input":{
-                                        "BidsDir": {
-                                                        "type": "directory",
-                                                        "label": "Input Bids Directory",
+                                        "options": {
+                                                        "type": "integer",
+                                                        "label": "Smoothing value in mm",
                                                         },
-                                        "WriteDir": {
-                                                        "type": "directory",
+                                        "data": {
+                                                        "type": "string",
                                                         "label": "Input Bids Directory",
                                                         }
                                         }
@@ -159,23 +164,22 @@ def process_bids(args):
                                                   "success": {
                                                     "type": "boolean"
                                                   },
-                                                   "vbmdirs": {
-                                                    "type": "array",
-                                                    "contains": ["string"]
+                                                   "message": {
+                                                    "type": "string"
                                                   },
-                                                  "wc1files": {
-                                                    "type": "array",
-                                                    "contains": ["string"]
+                                                  "download_outputs": {
+                                                    "type": "string"
+                                                  },
+                                                   "display": {
+                                                    "type": "string"
                                                   }
                                                   }
                                         }
         Comments:
-            After verifying the BIDS format , the bids_dir and write_dir along with pre-processing specific pipeline options
+            After verifying the BIDS format , the bids_dir along with pre-processing specific pipeline options
             are sent to vbm_use_cases_layer for running the pipeline
 
-            The foll. args are used for reading from coinstac user directly, but for demo purposes we will read from args['state']['baseDirectory'] and args['state']['outputDirectory']
-            BidsDir = args['input']['BidsDir']
-            WriteDir = args['input']['WriteDir']
+            The foll. args are used for reading from coinstac user directly, but for demo purposes we can read from args['state']['baseDirectory'] and args['state']['outputDirectory']
     """
     BidsDir = args['input']['data']
     WriteDir = args['state']['outputDirectory']
@@ -198,35 +202,36 @@ def process_niftis(args):
             Args:
                 args (dictionary): {"input":{
                                             "NiftiFile": {
-                                                            "type": "directory",
+                                                            "type": "string",
                                                             "label": "text file with complete T1w nifti paths",
                                                             },
-                                            "WriteDir": {
-                                                            "type": "directory",
-                                                            "label": "Input Bids Directory",
+                                            "options": {
+                                                            "type": "integer",
+                                                            "label": "Smoothing value in mm",
                                                             }
                                             }
                                     }
             Returns:
-                computation_output (json): {"output": {
-                                                      "success": {
-                                                        "type": "boolean"
-                                                      },
-                                                       "vbmdirs": {
-                                                        "type": "array",
-                                                        "contains": ["string"]
-                                                      },
-                                                      "wc1files": {
-                                                        "type": "array",
-                                                        "contains": ["string"]
-                                                      }
-                                                      }
-                                            }
+            computation_output (json): {"output": {
+                                                  "success": {
+                                                    "type": "boolean"
+                                                  },
+                                                   "message": {
+                                                    "type": "string"
+                                                  },
+                                                  "download_outputs": {
+                                                    "type": "string"
+                                                  },
+                                                   "display": {
+                                                    "type": "string"
+                                                  }
+                                                  }
+                                        }
             Comments:
                 After verifying the nifti paths , the paths to nifti files and write_dir along with pre-processing specific pipeline options
                 are sent to vbm_use_cases_layer for running the pipeline
 
-                The foll. args are used for reading from coinstac user directly, but for demo purposes we will read from args['state']['baseDirectory'] and args['state']['outputDirectory']
+                The foll. args are used for reading from coinstac user directly, but for demo purposes we can read from args['state']['baseDirectory'] and args['state']['outputDirectory']
                 paths_file = args['input']['NiftiPaths']
                 WriteDir = args['input']['WriteDir']
 
