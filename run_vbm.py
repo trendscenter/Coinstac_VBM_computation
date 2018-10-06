@@ -108,7 +108,7 @@ template_dict = {
     'qc_readme_name':
     'quality_control_readme.txt',
     'qc_readme_content':
-    "In each subject's anat/vbm_spm12 directory,vbm_corr_value.txt gives the correlation value of the swc1*nii file with spm12/tpm/TPM.nii file from SPM12 toolbox"
+    "In each subject's anat/vbm_spm12 directory,vbm_corr_value.txt gives the correlation value of the swc1*nii file with spm12 template (TPM.nii) file from SPM12 toolbox"
 }
 """
 More info. on keys in template_dict
