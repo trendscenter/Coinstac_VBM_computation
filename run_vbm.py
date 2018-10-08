@@ -312,7 +312,7 @@ if __name__ == '__main__':
             json.dumps({
                 "output": {
                     "message":
-                    "Bids data not found or can not write to target directory"
+                    "Bids SMRI data not found or can not write to target directory"
                 },
                 "cache": {},
                 "success": True
