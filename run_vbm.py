@@ -109,6 +109,7 @@ template_dict = {
     'quality_control_readme.txt',
     'qc_readme_content':
     "In each subject's anat/vbm_spm12 directory,vbm_corr_value.txt gives the correlation value of the swc1*nii file with spm12 template (TPM.nii) file from SPM12 toolbox"
+    "\nIts suggested that scans with correlation value <=0.91 should be manually looked into for possible reorientation to the ac-pc line"
 }
 """
 More info. on keys in template_dict
