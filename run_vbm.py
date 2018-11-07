@@ -43,7 +43,7 @@ def stdchannel_redirected(stdchannel, dest_filename):
 
 
 import ujson as json
-import warnings, os, glob, sys, shutil
+import warnings, os, glob, sys
 import nibabel as nib
 
 from bids.grabbids import BIDSLayout
@@ -72,6 +72,8 @@ template_dict = {
     os.path.join('/computation', 'transform.mat'),
     'scan_type':
     'T1w',
+    'length_data':
+    0,
     'FWHM_SMOOTH': [10, 10, 10],
     'BIAS_REGULARISATION':
     0.0001,
@@ -102,7 +104,7 @@ template_dict = {
     "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
     'nifti_outputs_manual_content':
     "sub-1,sub-2,sub-* denotes each nifti file with respect to the order in the nifti paths given"
-    "Prefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
+    "\nPrefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
     "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
     "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
     'qc_readme_name':
@@ -146,136 +148,6 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
 
 
-def process_bids(args):
-    """Runs the pre-processing pipeline on structural T1w scans in BIDS data
-        Args:
-            args (dictionary): {"input":{
-                                        "options": {
-                                                        "type": "integer",
-                                                        "label": "Smoothing value in mm",
-                                                        },
-                                        "data": {
-                                                        "type": "string",
-                                                        "label": "Input Bids Directory",
-                                                        }
-                                        }
-                                }
-        Returns:
-            computation_output (json): {"output": {
-                                                  "success": {
-                                                    "type": "boolean"
-                                                  },
-                                                   "message": {
-                                                    "type": "string"
-                                                  },
-                                                  "download_outputs": {
-                                                    "type": "string"
-                                                  },
-                                                   "display": {
-                                                    "type": "string"
-                                                  }
-                                                  }
-                                        }
-        Comments:
-            After verifying the BIDS format , the bids_dir along with pre-processing specific pipeline options
-            are sent to vbm_use_cases_layer for running the pipeline
-
-            The foll. args are used for reading from coinstac user directly, but for demo purposes we can read from args['state']['baseDirectory'] and args['state']['outputDirectory']
-    """
-    BidsDir = args['input']['data']
-    WriteDir = args['state']['outputDirectory']
-
-    if ('options' in args['input']) and (args['input']['options']):
-        opts = args['input']['options']
-    else:
-        opts = None
-
-    return vbm_use_cases_layer.execute_pipeline(
-        bids_dir=BidsDir,
-        write_dir=WriteDir,
-        data_type='bids',
-        pipeline_opts=opts,
-        **template_dict)
-
-
-def process_niftis(args):
-    """Runs the pre-processing pipeline on structural T1w nifti scans from paths in the text or csv file
-            Args:
-                args (dictionary): {"input":{
-                                            "NiftiFile": {
-                                                            "type": "string",
-                                                            "label": "text file with complete T1w nifti paths",
-                                                            },
-                                            "options": {
-                                                            "type": "integer",
-                                                            "label": "Smoothing value in mm",
-                                                            }
-                                            }
-                                    }
-            Returns:
-            computation_output (json): {"output": {
-                                                  "success": {
-                                                    "type": "boolean"
-                                                  },
-                                                   "message": {
-                                                    "type": "string"
-                                                  },
-                                                  "download_outputs": {
-                                                    "type": "string"
-                                                  },
-                                                   "display": {
-                                                    "type": "string"
-                                                  }
-                                                  }
-                                        }
-            Comments:
-                After verifying the nifti paths , the paths to nifti files and write_dir along with pre-processing specific pipeline options
-                are sent to vbm_use_cases_layer for running the pipeline
-
-                The foll. args are used for reading from coinstac user directly, but for demo purposes we can read from args['state']['baseDirectory'] and args['state']['outputDirectory']
-                paths_file = args['input']['NiftiPaths']
-                WriteDir = args['input']['WriteDir']
-
-            """
-    #Get paths to *.csv or *.txt files
-    nifti_paths_file = (
-        glob.glob(os.path.join(args['state']['baseDirectory'], '*.csv'))
-        or glob.glob(os.path.join(args['state']['baseDirectory'], '*.txt')))[0]
-    WriteDir = args['state']['outputDirectory']
-
-    if ('options' in args['input']) and (args['input']['options']):
-        opts = args['input']['options']
-    else:
-        opts = None
-
-    # Read each line in nifti_paths file into niftis variable
-    count = 0
-    valid_niftis = []
-
-    with open(nifti_paths_file, "r") as f:
-        for each in f:
-            if nib.load(each.rstrip(('\n'))):
-                valid_niftis.append(each.rstrip(('\n')))
-                count += 1
-    if count > 0 and os.access(WriteDir, os.W_OK):
-        return vbm_use_cases_layer.execute_pipeline(
-            nii_files=valid_niftis,
-            write_dir=WriteDir,
-            data_type='nifti',
-            pipeline_opts=opts,
-            **template_dict)
-    else:
-        return sys.stdout.write(
-            json.dumps({
-                "output": {
-                    "message":
-                    "No nifti files found or write directory does not have permissions"
-                },
-                "cache": {},
-                "success": True
-            }))
-
-
 def software_check():
     """This function returns the spm standalone version installed inside the docker
     """
@@ -294,26 +166,39 @@ if __name__ == '__main__':
     # The following block of code assigns the appropriate pre-processing function for input data format, based on Bids or nifti file paths in text file
     args = json.loads(sys.stdin.read())
 
-    BidsDir = args['input']['data']
+    data = args['state']['baseDirectory']
     WriteDir = args['state']['outputDirectory']
 
-    # Check if data is in BIDS format and has T1w
-    layout = BIDSLayout(BidsDir)
-    smri_data = layout.get(
-        type=template_dict['scan_type'], extensions='.nii.gz')
+    if ('options' in args['input']) and (args['input']['options']):
+        opts = args['input']['options']
+    else:
+        opts = None
 
-    if (len(smri_data) > 0) and os.access(WriteDir, os.W_OK):
-        computation_output = process_bids(args)
+    if os.path.isfile(
+            os.path.join(args['state']['baseDirectory'],
+                         'dataset_description.json')) and os.access(
+                             WriteDir, os.W_OK):
+        computation_output = vbm_use_cases_layer.execute_pipeline(
+            bids_dir=data,
+            write_dir=WriteDir,
+            data_type='bids',
+            pipeline_opts=opts,
+            **template_dict)
         sys.stdout.write(computation_output)
-    elif (len(smri_data) == 0) and os.access(WriteDir, os.W_OK):
-        computation_output = process_niftis(args)
+    elif os.access(WriteDir, os.W_OK):
+        nifti_paths = args['input']['data']
+        computation_output = vbm_use_cases_layer.execute_pipeline(
+            nii_files=nifti_paths,
+            write_dir=WriteDir,
+            data_type='nifti',
+            pipeline_opts=opts,
+            **template_dict)
         sys.stdout.write(computation_output)
     else:
         sys.stdout.write(
             json.dumps({
                 "output": {
-                    "message":
-                    "Bids SMRI data not found or can not write to target directory"
+                    "message": "Can not write to target directory"
                 },
                 "cache": {},
                 "success": True

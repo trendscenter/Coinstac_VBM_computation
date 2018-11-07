@@ -81,35 +81,45 @@ def execute_pipeline(bids_dir='',
             After setting up the pipeline here , the pipeline is run
 
         """
+    try:
 
-    [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(
-        pipeline_opts, **template_dict)
+        [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(
+            pipeline_opts, **template_dict)
 
-    if data_type == 'bids':
-        # Runs the pipeline on each subject, this algorithm runs serially
-        layout = BIDSLayout(bids_dir)
-        smri_data = layout.get(
-            type=template_dict['scan_type'], extensions='.nii.gz')
+        if data_type == 'bids':
+            # Runs the pipeline on each subject, this algorithm runs serially
+            layout = BIDSLayout(bids_dir)
+            smri_data = layout.get(
+                type=template_dict['scan_type'], extensions='.nii.gz')
 
-        return run_pipeline(
-            write_dir,
-            smri_data,
-            reorient,
-            datasink,
-            vbm_preprocess,
-            data_type='bids',
-            **template_dict)
-    elif data_type == 'nifti':
-        # Runs the pipeline on each nifti file, this algorithm runs serially
-        smri_data = nii_files
-        return run_pipeline(
-            write_dir,
-            smri_data,
-            reorient,
-            datasink,
-            vbm_preprocess,
-            data_type='nifti',
-            **template_dict)
+            return run_pipeline(
+                write_dir,
+                smri_data,
+                reorient,
+                datasink,
+                vbm_preprocess,
+                data_type='bids',
+                **template_dict)
+        elif data_type == 'nifti':
+            # Runs the pipeline on each nifti file, this algorithm runs serially
+            smri_data = nii_files
+            return run_pipeline(
+                write_dir,
+                smri_data,
+                reorient,
+                datasink,
+                vbm_preprocess,
+                data_type='nifti',
+                **template_dict)
+    except Exception as e:
+        sys.stdout.write(
+            json.dumps({
+                "output": {
+                    "message": str(e)
+                },
+                "cache": {},
+                "success": True
+            }))
 
 
 def remove_tmp_files():
@@ -414,7 +424,7 @@ def run_pipeline(write_dir,
     id = 0  # id for assigning sub-id incase of nifti files in txt format
     count_success = 0  # variable for counting how many subjects were successfully run
     write_dir = write_dir + '/' + template_dict['output_zip_dir']  # Store outputs in this directory for zipping the directory
-    error_log = dict()  # Dictionary for storing error log for each subject
+    error_log = dict()  # dict for storing error log
 
     for each_sub in smri_data:
 
@@ -436,7 +446,8 @@ def run_pipeline(write_dir,
 
             if data_type == 'nifti':
                 id = id + 1
-                sub_id = 'sub-' + str(id)
+                sub_id = 'subID-' + str(id)
+                session = ''
                 nii_output = ((each_sub).split('/')[-1]).split('.gz')[0]
                 n1_img = nib.load(each_sub)
 
@@ -483,7 +494,6 @@ def run_pipeline(write_dir,
 
         except Exception as e:
             # If fails raise the exception,print exception error
-            #sys.stderr.write(str(e))
             error_log.update({sub_id: str(e)})
             continue
 
