@@ -175,6 +175,7 @@ if __name__ == '__main__':
     else:
         opts = None
 
+    #Check if data is BIDS
     if os.path.isfile(
             os.path.join(args['state']['baseDirectory'],
                          'dataset_description.json')) and os.access(
@@ -186,6 +187,7 @@ if __name__ == '__main__':
             pipeline_opts=opts,
             **template_dict)
         sys.stdout.write(computation_output)
+    #Check if data has nifti files
     elif os.access(WriteDir, os.W_OK):
         nifti_paths = args['input']['data']
         computation_output = vbm_use_cases_layer.execute_pipeline(
