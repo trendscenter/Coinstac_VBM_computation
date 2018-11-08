@@ -194,7 +194,7 @@ def nii_to_string_converter(write_dir, label, **template_dict):
 
 
 #Compute corrcoef
-def get_corr(segmented_file, **template_dict):
+def get_corr(segmented_file, write_dir, sub_id, **template_dict):
     """This function computes correlation value of the swc1*nii file with spm12/tpm/TPM.nii file from SPM12 toolbox """
 
     def extract_data(file):
@@ -219,6 +219,12 @@ def get_corr(segmented_file, **template_dict):
     b = fcre_data - np.mean(fcre_data)
     covalue = (a * b).sum() / math.sqrt((a * a).sum() * (b * b).sum())
     write_path = os.path.dirname(segmented_file)
+    if covalue <= 0.91:
+        with open(
+                os.path.join(write_dir, template_dict['qa_flagged_filename']),
+                'w') as fp:
+            fp.write("%s\n" % (sub_id))
+            fp.close()
 
     with open(os.path.join(write_path, template_dict['vbm_qc_filename']),
               'w') as fp:
@@ -482,7 +488,7 @@ def run_pipeline(write_dir,
                 segmented_file = glob.glob(
                     os.path.join(vbm_out, template_dict['vbm_output_dirname'],
                                  template_dict['qc_nifti']))
-                get_corr(segmented_file[0], **template_dict)
+                get_corr(segmented_file[0], write_dir, sub_id, **template_dict)
 
                 # Write readme files
                 write_readme_files(write_dir, data_type, **template_dict)

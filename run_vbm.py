@@ -72,8 +72,6 @@ template_dict = {
     os.path.join('/computation', 'transform.mat'),
     'scan_type':
     'T1w',
-    'length_data':
-    0,
     'FWHM_SMOOTH': [10, 10, 10],
     'BIAS_REGULARISATION':
     0.0001,
@@ -83,6 +81,8 @@ template_dict = {
     'vbm_spm12',
     'output_zip_dir':
     'vbm_outputs',
+    'qa_flagged_filename':
+    'QA_flagged_subjects.txt',
     'display_image_name':
     'wc1Re.png',
     'display_pngimage_name':
@@ -111,7 +111,8 @@ template_dict = {
     'quality_control_readme.txt',
     'qc_readme_content':
     "In each subject's anat/vbm_spm12 directory,vbm_corr_value.txt gives the correlation value of the swc1*nii file with spm12 template (TPM.nii) file from SPM12 toolbox"
-    "\nIts suggested that scans with correlation value <=0.91 should be manually looked into for possible reorientation to the ac-pc line"
+    "\nIts suggested that scans with correlation value <=0.91 should be manually looked into for possible reorientation to the ac-pc line. Subjects that do not pass this QA metric"
+    "\nwill be saved in vbm_outputs/QA_flagged_subjects.txt"
 }
 """
 More info. on keys in template_dict
