@@ -98,7 +98,7 @@ template_dict = {
     'outputs_description.txt',
     'coinstac_display_info':
     'Please read outputs_description.txt for description of pre-processed output files and quality_control_readme.txt for quality control measurement.'
-    '\nThese files are placed under the pre-processed data',
+    'These files are placed under the pre-processed data.',
     'bids_outputs_manual_content':
     "Prefixes descriptions for segmented images:c1-Gray matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
     "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
