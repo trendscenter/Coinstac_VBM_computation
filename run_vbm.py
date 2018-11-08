@@ -110,9 +110,9 @@ template_dict = {
     'qc_readme_name':
     'quality_control_readme.txt',
     'qc_readme_content':
-    "In each subject's anat/vbm_spm12 directory,vbm_corr_value.txt gives the correlation value of the swc1*nii file with spm12 template (TPM.nii) file from SPM12 toolbox"
-    "\nIts suggested that scans with correlation value <=0.91 should be manually looked into for possible reorientation to the ac-pc line. Subjects that do not pass this QA metric"
-    "\nwill be saved in vbm_outputs/QA_flagged_subjects.txt"
+    "In each subject's anat/vbm_spm12 directory,vbm_corr_value.txt gives the correlation value of the swc1*nii file with spm12 adult brain tissue probability maps (TPM.nii) file from SPM12 toolbox"
+    "\nIf your subjects are kids/adolescent, take this into considersation as correlation value may not pass threshold. For an adult study, its suggested that scans with correlation value <=0.91 "
+    "\nshould be manually looked into for possible reorientation to the ac-pc line. Subjects that do not pass this QA metric will be saved in vbm_outputs/QA_flagged_subjects.txt"
 }
 """
 More info. on keys in template_dict
