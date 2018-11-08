@@ -149,15 +149,13 @@ def write_readme_files(write_dir='', data_type=None, **template_dict):
     # Write a text file with info. on each of the output nifti files
     if data_type == 'bids':
         with open(
-                os.path.join(write_dir,
-                             template_dict['bids_outputs_manual_name']),
+                os.path.join(write_dir, template_dict['outputs_manual_name']),
                 'w') as fp:
             fp.write(template_dict['bids_outputs_manual_content'])
             fp.close()
     elif data_type == 'nifti':
         with open(
-                os.path.join(write_dir,
-                             template_dict['nifti_outputs_manual_name']),
+                os.path.join(write_dir, template_dict['outputs_manual_name']),
                 'w') as fp:
             fp.write(template_dict['nifti_outputs_manual_content'])
             fp.close()
@@ -527,8 +525,10 @@ def run_pipeline(write_dir,
     download_outputs_path = write_dir + '.zip'
 
     output_message = "VBM preprocessing completed. " + str(
-        count_success) + "/" + str(
-            len(smri_data)) + " subjects" + " completed successfully."
+        count_success
+    ) + "/" + str(
+        len(smri_data)
+    ) + " subjects" + " completed successfully." + template_dict['coinstac_display_info']
 
     if bool(error_log):
         output_message = output_message + " Error log:" + str(error_log)
