@@ -530,6 +530,20 @@ def run_pipeline(write_dir,
         len(smri_data)
     ) + " subjects" + " completed successfully." + template_dict['coinstac_display_info']
 
+    preprocessed_percentage = (count_success / len(smri_data)) * 100
+
+    if os.path.isfile(
+            os.path.join(write_dir, template_dict['qa_flagged_filename'])):
+        qa_percentage = (len(
+            open(
+                os.path.join(write_dir, template_dict['qa_flagged_filename']))
+            .readlines()) / len(smri_data)) * 100
+        if (qa_percentage <= 50) or (preprocessed_percentage <= 50):
+            output_message = output_message + template_dict['flag_warning']
+    else:
+        if (preprocessed_percentage <= 50):
+            output_message = output_message + template_dict['flag_warning']
+
     if bool(error_log):
         output_message = output_message + " Error log:" + str(error_log)
 
