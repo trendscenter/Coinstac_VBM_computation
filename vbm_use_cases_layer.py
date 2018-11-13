@@ -376,7 +376,7 @@ def create_pipeline_nodes(pipeline_opts, **template_dict):
         create_workflow_input(
             source=segment.node,
             target=list_norm_images.node,
-            source_output='normalized_class_images',
+            source_output='modulated_class_images',
             target_input='normalized_class_images'),
         create_workflow_input(
             source=list_norm_images.node,
