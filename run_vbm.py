@@ -159,6 +159,10 @@ def software_check():
         matlab_cmd=template_dict['matlab_cmd'], use_mcr=True)
     return (spm.SPMCommand().version)
 
+def args_parser(args):
+    # Extract arguments from json
+    if 'registration_template' in args['input']:
+        template_dict['tpm_path'] = args['input']['registration_template']
 
 if __name__ == '__main__':
     # Check if spm is running
@@ -170,8 +174,11 @@ if __name__ == '__main__':
     # The following block of code assigns the appropriate pre-processing function for input data format, based on Bids or nifti file paths in text file
     args = json.loads(sys.stdin.read())
 
-    data = args['state']['baseDirectory']
+    args_parser(args)
+
+    data = args['input']['data']
     WriteDir = args['state']['outputDirectory']
+
 
     if ('options' in args['input']) and (args['input']['options']):
         opts = args['input']['options']
@@ -180,7 +187,7 @@ if __name__ == '__main__':
 
     #Check if data is BIDS
     if os.path.isfile(
-            os.path.join(args['state']['baseDirectory'],
+            os.path.join(data[0][0],
                          'dataset_description.json')) and os.access(
                              WriteDir, os.W_OK):
         computation_output = vbm_use_cases_layer.execute_pipeline(
@@ -192,7 +199,7 @@ if __name__ == '__main__':
         sys.stdout.write(computation_output)
     #Check if data has nifti files
     elif os.access(WriteDir, os.W_OK):
-        nifti_paths = args['input']['data']
+        nifti_paths = data[0]
         computation_output = vbm_use_cases_layer.execute_pipeline(
             nii_files=nifti_paths,
             write_dir=WriteDir,
