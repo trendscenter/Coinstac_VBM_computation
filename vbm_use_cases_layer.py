@@ -376,7 +376,7 @@ def create_pipeline_nodes(pipeline_opts, **template_dict):
         create_workflow_input(
             source=segment.node,
             target=list_norm_images.node,
-            source_output='modulated_class_images',
+            source_output='normalized_class_images',
             target_input='normalized_class_images'),
         create_workflow_input(
             source=list_norm_images.node,
@@ -482,6 +482,7 @@ def run_pipeline(write_dir,
                 with stdchannel_redirected(sys.stderr, os.devnull):
                     vbm_preprocess.run()
 
+
                 # Calculate correlation coefficient of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(
                     os.path.join(vbm_out, template_dict['vbm_output_dirname'],
@@ -496,12 +497,14 @@ def run_pipeline(write_dir,
                     os.path.join(vbm_out, template_dict['vbm_output_dirname']),
                     label, **template_dict)
 
+
         except Exception as e:
             # If fails raise the exception,print exception error
             error_log.update({sub_id: str(e)})
             continue
 
         else:
+
             # If the try block succeeds, increase the count
             count_success = count_success + 1
 
@@ -510,6 +513,7 @@ def run_pipeline(write_dir,
                     os.path.join(vbm_out, template_dict['vbm_output_dirname'],
                                  template_dict['display_image_name']),
                     os.path.dirname(write_dir))
+
 
         finally:
             remove_tmp_files()
