@@ -236,7 +236,7 @@ def data_parser(args):
         sys.stdout.write(
             json.dumps({
                 "output": {
-                    "message": "Can not write to target directory"
+                    "message": "Input data not found/Can not write to target directory"
                 },
                 "cache": {},
                 "success": True
