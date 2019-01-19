@@ -196,10 +196,10 @@ def data_parser(args):
 
     # Check if data is BIDS
     if os.path.isfile(
-            os.path.join(data[0][0],
+            os.path.join(data[0],
                          'dataset_description.json')) and os.access(
         WriteDir, os.W_OK):
-        cmd = "bids-validator {0}".format(data[0][0])
+        cmd = "bids-validator {0}".format(data[0])
         bids_process = os.popen(cmd).read()
         bids_dir = data[0]
         if bids_process and template_dict['scan_type'] in bids_process:
@@ -210,8 +210,8 @@ def data_parser(args):
                 **template_dict)
             sys.stdout.write(computation_output)
     # Check if data has nifti files
-    elif [x for x in data[0] if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
-        nifti_paths = data[0]
+    elif [x for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
+        nifti_paths = data
         computation_output = vbm_use_cases_layer.execute_pipeline(
             data=nifti_paths,
             write_dir=WriteDir,
@@ -219,9 +219,9 @@ def data_parser(args):
             **template_dict)
         sys.stdout.write(computation_output)
     # Check if inputs are dicoms
-    elif [x for x in data[0] if os.path.isdir(x)] and os.access(WriteDir, os.W_OK):
+    elif [x for x in data if os.path.isdir(x)] and os.access(WriteDir, os.W_OK):
         dicom_dirs=list()
-        for dcm in data[0]:
+        for dcm in data:
             if os.path.isdir(dcm) and os.listdir(dcm):
                 dicom_file = glob.glob(dcm + '/*')[0]
                 dicom_header_info=os.popen('strings' + ' ' + dicom_file + '|grep DICM').read()
