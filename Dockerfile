@@ -56,6 +56,7 @@ ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
 RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash - \
     && yum install -y nodejs gcc \
     && ln -s /usr/local/bin/node /usr/local/bin/nodejs
+    && npm install -g bids-validator
 
 #Install other python packages
 RUN pip install med2image pybids coverage
