@@ -10,7 +10,7 @@
   },
   "computation": {
     "type": "docker",
-   "dockerImage": "vbm_docker",
+   "dockerImage": "final_vbm_dcms",
     "command": [
       "python",
       "\/computation\/run_vbm.py"
@@ -24,13 +24,13 @@
 "label": "Smoothing FWHM in mm",
 "defaultValue": 10,
 "min": 0,
-"max": 1,
+"max": 10,
 "step": 1,
 "description":"Full width half maximum smoothing kernel value in x,y,z directions"
 },
 
 "data":{
-"type":"string",
+"type":"array",
 "label": "Dataset_description.json of Bids Directory"
 }
 
