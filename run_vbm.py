@@ -50,12 +50,12 @@ from bids.grabbids import BIDSLayout
 
 ## Load Nipype spm interface ##
 from nipype.interfaces import spm
+import vbm_use_cases_layer
 
 #Stop printing nipype.workflow info to stdout
 from nipype import logging
 logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
-import vbm_use_cases_layer
 
 #Create a dict to store all paths to softwares,templates & store parameters, names of output files
 
@@ -73,6 +73,10 @@ template_dict = {
     'scan_type':
     'T1w',
     'FWHM_SMOOTH': [10, 10, 10],
+    'dicom_dir':
+        '',
+    'dicom_output_dir':
+        '',
     'BIAS_REGULARISATION':
     0.0001,
     'FWHM_GAUSSIAN_SMOOTH_BIAS':
@@ -106,10 +110,15 @@ template_dict = {
     "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
     "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
     'nifti_outputs_manual_content':
-    "sub-1,sub-2,sub-* denotes each nifti file with respect to the order in the nifti paths given"
+    "sub-1,sub-2,sub-* denotes each nifti file with respect to the order of the nifti paths given"
     "\nPrefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
     "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
     "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
+    'dicoms_outputs_manual_content':
+        "sub-1,sub-2,sub-* denotes each session's dicom directory with respect to the order of the dicom directory paths given"
+        "\nPrefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
+        "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
+        "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
     'qc_readme_name':
     'quality_control_readme.txt',
     'qc_readme_content':
@@ -161,8 +170,78 @@ def software_check():
 
 def args_parser(args):
     # Extract arguments from json
+    if 'smooth_fwhm' in args['input']:
+        template_dict['FWHM_SMOOTH'] = args['input']['options']
+
     if 'registration_template' in args['input']:
-        template_dict['tpm_path'] = args['input']['registration_template']
+        if os.path.isfile(args['input']['registration_template']) and (str(((nib.load(template_dict['tpm_path'])).shape))==str(((nib.load(args['input']['registration_template'])).shape))):
+            template_dict['tpm_path'] = args['input']['registration_template']
+        else:
+            sys.stdout.write(
+                json.dumps({
+                    "output": {
+                        "message": "Non-standard Registration template "
+                    },
+                    "cache": {},
+                    "success": True
+                }))
+            sys.exit()
+
+
+def data_parser(args):
+
+    #Read input data from args
+    data = args['input']['data']
+    WriteDir = args['state']['outputDirectory']
+
+    # Check if data is BIDS
+    if os.path.isfile(
+            os.path.join(data[0][0],
+                         'dataset_description.json')) and os.access(
+        WriteDir, os.W_OK):
+        cmd = "bids-validator {0}".format(data[0][0])
+        bids_process = os.popen(cmd).read()
+        bids_dir = data[0]
+        if bids_process and template_dict['scan_type'] in bids_process:
+            computation_output = vbm_use_cases_layer.execute_pipeline(
+                data=bids_dir,
+                write_dir=WriteDir,
+                data_type='bids',
+                **template_dict)
+            sys.stdout.write(computation_output)
+    # Check if data has nifti files
+    elif [x for x in data[0] if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
+        nifti_paths = data[0]
+        computation_output = vbm_use_cases_layer.execute_pipeline(
+            data=nifti_paths,
+            write_dir=WriteDir,
+            data_type='nifti',
+            **template_dict)
+        sys.stdout.write(computation_output)
+    # Check if inputs are dicoms
+    elif [x for x in data[0] if os.path.isdir(x)] and os.access(WriteDir, os.W_OK):
+        dicom_dirs=list()
+        for dcm in data[0]:
+            if os.path.isdir(dcm) and os.listdir(dcm):
+                dicom_file = glob.glob(dcm + '/*')[0]
+                dicom_header_info=os.popen('strings' + ' ' + dicom_file + '|grep DICM').read()
+                if 'DICM' in dicom_header_info:dicom_dirs.append(dcm)
+        computation_output = vbm_use_cases_layer.execute_pipeline(
+            data=dicom_dirs,
+            write_dir=WriteDir,
+            data_type='dicoms',
+            **template_dict)
+        sys.stdout.write(computation_output)
+    else:
+        sys.stdout.write(
+            json.dumps({
+                "output": {
+                    "message": "Can not write to target directory"
+                },
+                "cache": {},
+                "success": True
+            }))
+
 
 if __name__ == '__main__':
     # Check if spm is running
@@ -175,44 +254,4 @@ if __name__ == '__main__':
     args = json.loads(sys.stdin.read())
 
     args_parser(args)
-
-    data = args['input']['data']
-    WriteDir = args['state']['outputDirectory']
-
-
-    if ('options' in args['input']) and (args['input']['options']):
-        opts = args['input']['options']
-    else:
-        opts = None
-
-    #Check if data is BIDS
-    if os.path.isfile(
-            os.path.join(data[0][0],
-                         'dataset_description.json')) and os.access(
-                             WriteDir, os.W_OK):
-        computation_output = vbm_use_cases_layer.execute_pipeline(
-            bids_dir=data,
-            write_dir=WriteDir,
-            data_type='bids',
-            pipeline_opts=opts,
-            **template_dict)
-        sys.stdout.write(computation_output)
-    #Check if data has nifti files
-    elif os.access(WriteDir, os.W_OK):
-        nifti_paths = data[0]
-        computation_output = vbm_use_cases_layer.execute_pipeline(
-            nii_files=nifti_paths,
-            write_dir=WriteDir,
-            data_type='nifti',
-            pipeline_opts=opts,
-            **template_dict)
-        sys.stdout.write(computation_output)
-    else:
-        sys.stdout.write(
-            json.dumps({
-                "output": {
-                    "message": "Can not write to target directory"
-                },
-                "cache": {},
-                "success": True
-            }))
+    data_parser(args)
