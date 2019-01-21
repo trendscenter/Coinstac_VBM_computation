@@ -483,13 +483,11 @@ def run_pipeline(write_dir,
                 vbm_out = os.path.join(write_dir, sub_id, session, 'anat')
                 os.makedirs(vbm_out, exist_ok=True)
 
-                ## This code runs the dcm here
+                ## This code runs the dicom to nifti conversion here
                 from nipype.interfaces.spm.utils import DicomImport
                 import nipype.pipeline.engine as pe
                 dcm_nii_convert=pe.Node(interface = DicomImport(), name = 'converter')
                 dcm_nii_convert.inputs.in_files = glob.glob(os.path.join(each_sub,'*'))
-
-                # Directory in which vbm outputs will be written
                 dcm_nii_convert.inputs.output_dir =vbm_out
                 with stdchannel_redirected(sys.stderr, os.devnull):
                     dcm_nii_convert.run()
