@@ -14,6 +14,7 @@ from nipype.interfaces.utility import Function
 from nipype import logging
 logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
+
 ## Reorientation node & settings ##
 class Reorient:
     def __init__(self, **template_dict):
@@ -66,6 +67,7 @@ class Smooth:
         self.node = pe.Node(interface=spm.Smooth(), name='smoothing')
         self.node.inputs.paths = template_dict['spm_path']
         self.node.inputs.fwhm = template_dict['FWHM_SMOOTH']
+
 
 ## Datsink Node that collects segmented, smoothed files and writes to temp_write_dir ##
 class Datasink:

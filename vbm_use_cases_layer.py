@@ -5,6 +5,8 @@ This layer runs the pre-processing VBM (Voxel Based Morphometry) pipeline based 
 This layer uses entities layer to modify nodes of the pipeline as needed
 """
 import contextlib
+
+
 @contextlib.contextmanager
 def stdchannel_redirected(stdchannel, dest_filename):
     """
@@ -51,10 +53,7 @@ from nipype import logging
 logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
 
-def setup_pipeline(data='',
-                     write_dir='',
-                     data_type=None,
-                     **template_dict):
+def setup_pipeline(data='', write_dir='', data_type=None, **template_dict):
     """setup the pre-processing pipeline on T1W scans
         Args:
             data (array) : Input data
@@ -83,7 +82,8 @@ def setup_pipeline(data='',
         """
     try:
         # Create pipeline nodes from vbm_entities_layer.py and pass them run_pipeline function
-        [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(**template_dict)
+        [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(
+            **template_dict)
 
         if data_type == 'bids':
             # Runs the pipeline on each subject serially
@@ -242,6 +242,7 @@ def get_corr(segmented_file, write_dir, sub_id, **template_dict):
                 'w') as fp:
             fp.write("%s\n" % (sub_id))
             fp.close()
+
 
 def create_pipeline_nodes(**template_dict):
     """This function creates and modifies nodes of the pipeline from entities layer with nipype
@@ -415,18 +416,22 @@ def create_workflow_input(source, target, source_output, target_input):
     """
     return (source, target, [(source_output, target_input)])
 
+
 def smooth_images(write_dir):
     """This function runs smoothing on input images. Ex: modulated images"""
     from nipype.interfaces import spm
     from nipype.interfaces.io import DataSink
     smooth = pe.Node(interface=spm.Smooth(), name='smooth')
-    smooth.inputs.in_files = glob.glob(os.path.join(write_dir,'mwc*.nii'))
-    vbm_smooth_modulated_images = pe.Workflow(name="vbm_smooth_modulated_images")
+    smooth.inputs.in_files = glob.glob(os.path.join(write_dir, 'mwc*.nii'))
+    vbm_smooth_modulated_images = pe.Workflow(
+        name="vbm_smooth_modulated_images")
     datasink = pe.Node(interface=DataSink(), name='datasink')
     datasink.inputs.base_directory = write_dir
-    vbm_smooth_modulated_images.connect([(smooth, datasink, [('smoothed_files', write_dir)])])
+    vbm_smooth_modulated_images.connect([(smooth, datasink, [('smoothed_files',
+                                                              write_dir)])])
     with stdchannel_redirected(sys.stderr, os.devnull):
         vbm_smooth_modulated_images.run()
+
 
 def run_pipeline(write_dir,
                  smri_data,
@@ -438,13 +443,14 @@ def run_pipeline(write_dir,
     """This function runs pipeline"""
 
     id = 0  # id for assigning sub-id incase of nifti files in txt format
-    loop_counter=0 # loop counter
+    loop_counter = 0  # loop counter
     count_success = 0  # variable for counting how many subjects were successfully run
-    write_dir = write_dir + '/' + template_dict['output_zip_dir']  # Store outputs in this directory for zipping the directory
+    write_dir = write_dir + '/' + template_dict[
+        'output_zip_dir']  # Store outputs in this directory for zipping the directory
     error_log = dict()  # dict for storing error log
 
     for each_sub in smri_data:
-        loop_counter +=1
+        loop_counter += 1
 
         try:
 
@@ -477,13 +483,14 @@ def run_pipeline(write_dir,
                 ## This code runs the dicom to nifti conversion here
                 from nipype.interfaces.spm.utils import DicomImport
                 import nipype.pipeline.engine as pe
-                dcm_nii_convert=pe.Node(interface = DicomImport(), name = 'converter')
-                dcm_nii_convert.inputs.in_files = glob.glob(os.path.join(each_sub,'*'))
-                dcm_nii_convert.inputs.output_dir =vbm_out
+                dcm_nii_convert = pe.Node(
+                    interface=DicomImport(), name='converter')
+                dcm_nii_convert.inputs.in_files = glob.glob(
+                    os.path.join(each_sub, '*'))
+                dcm_nii_convert.inputs.output_dir = vbm_out
                 with stdchannel_redirected(sys.stderr, os.devnull):
                     dcm_nii_convert.run()
                 n1_img = nib.load(glob.glob(os.path.join(vbm_out, '*.nii'))[0])
-
 
             # Directory in which vbm outputs will be written
             vbm_out = os.path.join(write_dir, sub_id, session, 'anat')
@@ -496,7 +503,8 @@ def run_pipeline(write_dir,
                 Save nifti file from input data into output directory only if data_type !=dicoms because the dcm_nii_convert in the previous
                 step saves the nifti file to output directory
                  """
-                if data_type != 'dicoms': nib.save(n1_img, os.path.join(vbm_out, nii_output))
+                if data_type != 'dicoms':
+                    nib.save(n1_img, os.path.join(vbm_out, nii_output))
 
                 # Create vbm_spm12 dir under the specific sub-id/anat
                 os.makedirs(
@@ -507,17 +515,19 @@ def run_pipeline(write_dir,
 
                 # Edit reorient node inputs
                 reorient.node.inputs.in_file = nifti_file
-                reorient.node.inputs.out_file = vbm_out + "/" + template_dict['vbm_output_dirname'] + "/Re.nii"
+                reorient.node.inputs.out_file = vbm_out + "/" + template_dict[
+                    'vbm_output_dirname'] + "/Re.nii"
 
                 # Edit datasink node inputs
                 datasink.node.inputs.base_directory = vbm_out
 
                 # Run the nipype pipeline
                 with stdchannel_redirected(sys.stderr, os.devnull):
-                        vbm_preprocess.run()
+                    vbm_preprocess.run()
 
                 # Smooth modulated images from segmentation node spm.Smooth()
-                smooth_images(os.path.join(vbm_out, template_dict['vbm_output_dirname']))
+                smooth_images(
+                    os.path.join(vbm_out, template_dict['vbm_output_dirname']))
 
                 # Calculate correlation coefficient of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(
@@ -533,7 +543,6 @@ def run_pipeline(write_dir,
                 nii_to_image_converter(
                     os.path.join(vbm_out, template_dict['vbm_output_dirname']),
                     label, **template_dict)
-
 
         except Exception as e:
             # If the above code fails for any reason update the error log for the subject id
@@ -553,11 +562,13 @@ def run_pipeline(write_dir,
                                  template_dict['display_image_name']),
                     os.path.dirname(write_dir))
 
-
         finally:
             remove_tmp_files()
 
-    if os.path.isfile(os.path.join(os.path.dirname(write_dir),template_dict['display_image_name'])):
+    if os.path.isfile(
+            os.path.join(
+                os.path.dirname(write_dir),
+                template_dict['display_image_name'])):
         #Zip output files
         shutil.make_archive(
             os.path.join(
@@ -570,10 +581,10 @@ def run_pipeline(write_dir,
         download_outputs_path = write_dir + '.zip'
 
         output_message = "VBM preprocessing completed. " + str(
-            count_success
-        ) + "/" + str(
-            len(smri_data)
-        ) + " subjects" + " completed successfully." + template_dict['coinstac_display_info']
+            count_success) + "/" + str(
+                len(smri_data)
+            ) + " subjects" + " completed successfully." + template_dict[
+                'coinstac_display_info']
 
         preprocessed_percentage = (count_success / len(smri_data)) * 100
 
@@ -582,8 +593,9 @@ def run_pipeline(write_dir,
                 os.path.join(write_dir, template_dict['qa_flagged_filename'])):
             qa_percentage = (len(
                 open(
-                    os.path.join(write_dir, template_dict['qa_flagged_filename']))
-                .readlines()) / len(smri_data)) * 100
+                    os.path.join(write_dir,
+                                 template_dict['qa_flagged_filename'])).
+                readlines()) / len(smri_data)) * 100
             if (qa_percentage <= 50) or (preprocessed_percentage <= 50):
                 output_message = output_message + template_dict['flag_warning']
         else:

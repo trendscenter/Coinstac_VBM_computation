@@ -17,6 +17,8 @@ success=True means program finished execution , despite the success or failure o
 This is to indicate to coinstac that program finished execution
 """
 import contextlib
+
+
 @contextlib.contextmanager
 def stdchannel_redirected(stdchannel, dest_filename):
     """
@@ -113,10 +115,10 @@ template_dict = {
     "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
     "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
     'dicoms_outputs_manual_content':
-        "sub-1,sub-2,sub-* denotes each session's dicom directory with respect to the order of the dicom directory paths given"
-        "\nPrefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
-        "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
-        "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
+    "sub-1,sub-2,sub-* denotes each session's dicom directory with respect to the order of the dicom directory paths given"
+    "\nPrefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
+    "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
+    "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
     'qc_readme_name':
     'quality_control_readme.txt',
     'qc_readme_content':
@@ -166,6 +168,7 @@ def software_check():
         matlab_cmd=template_dict['matlab_cmd'], use_mcr=True)
     return (spm.SPMCommand().version)
 
+
 def args_parser(args):
     """ This function extracts options from arguments
     """
@@ -173,7 +176,9 @@ def args_parser(args):
         template_dict['FWHM_SMOOTH'] = args['input']['options']
 
     if 'registration_template' in args['input']:
-        if os.path.isfile(args['input']['registration_template']) and (str(((nib.load(template_dict['tpm_path'])).shape))==str(((nib.load(args['input']['registration_template'])).shape))):
+        if os.path.isfile(args['input']['registration_template']) and (str(
+            ((nib.load(template_dict['tpm_path'])).shape)) == str(
+                ((nib.load(args['input']['registration_template'])).shape))):
             template_dict['tpm_path'] = args['input']['registration_template']
         else:
             sys.stdout.write(
@@ -195,10 +200,9 @@ def data_parser(args):
     WriteDir = args['state']['outputDirectory']
 
     # Check if data is BIDS
-    if os.path.isfile(
-            os.path.join(data[0],
-                         'dataset_description.json')) and os.access(
-        WriteDir, os.W_OK):
+    if os.path.isfile(os.path.join(data[0],
+                                   'dataset_description.json')) and os.access(
+                                       WriteDir, os.W_OK):
         cmd = "bids-validator {0}".format(data[0])
         bids_process = os.popen(cmd).read()
         bids_dir = data[0]
@@ -210,7 +214,8 @@ def data_parser(args):
                 **template_dict)
             sys.stdout.write(computation_output)
     # Check if data has nifti files
-    elif [x for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
+    elif [x
+          for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
         nifti_paths = data
         computation_output = vbm_use_cases_layer.setup_pipeline(
             data=nifti_paths,
@@ -219,13 +224,15 @@ def data_parser(args):
             **template_dict)
         sys.stdout.write(computation_output)
     # Check if inputs are dicoms
-    elif [x for x in data if os.path.isdir(x)] and os.access(WriteDir, os.W_OK):
-        dicom_dirs=list()
+    elif [x
+          for x in data if os.path.isdir(x)] and os.access(WriteDir, os.W_OK):
+        dicom_dirs = list()
         for dcm in data:
             if os.path.isdir(dcm) and os.listdir(dcm):
                 dicom_file = glob.glob(dcm + '/*')[0]
-                dicom_header_info=os.popen('strings' + ' ' + dicom_file + '|grep DICM').read()
-                if 'DICM' in dicom_header_info:dicom_dirs.append(dcm)
+                dicom_header_info = os.popen('strings' + ' ' + dicom_file +
+                                             '|grep DICM').read()
+                if 'DICM' in dicom_header_info: dicom_dirs.append(dcm)
         computation_output = vbm_use_cases_layer.setup_pipeline(
             data=dicom_dirs,
             write_dir=WriteDir,
@@ -236,7 +243,8 @@ def data_parser(args):
         sys.stdout.write(
             json.dumps({
                 "output": {
-                    "message": "Input data not found/Can not write to target directory"
+                    "message":
+                    "Input data not found/Can not write to target directory"
                 },
                 "cache": {},
                 "success": True
