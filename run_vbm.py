@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-This layer includes the interface adapter(IA) for parsing json args to read ni pre-processing structural T1w scans (accepts BIDS format)
+This layer includes the interface adapter(IA) for parsing json args to read structural T1w scans (formats:BIDS, nifti files, dicoms)
 This layer sends the output to vbm_use_cases_layer with the appropriate inputs to run the pipeine using nipype interface
 
-Sample run for bids input data:
-python3 run_fmri.py '{"input":{"opts":{"fwhm": 7}, "data":"/computation/test_dir/bids_input_data"}}'
+Sample run examples:
+python3 run_fmri.py {"options":{"value":6}, "registration_template":{"value":"/input/local0/simulatorRun/TPM.nii"}, "data":{"value":[["/input/local0/simulatorRun/3D_T1"]]}}
+3D_T1 contains T1w dicoms
 
-Sample run for input data of nifti paths in text or csv file:
-python3 run_fmri.py '{"input":{"opts":{"fwhm": 7}, "NiftiPaths":"/computation/test_dir/nifti_paths.txt"}}'
+python3 run_fmri.py python3 run_fmri.py {"options":{"value":6}, "registration_template":{"value":"/input/local0/simulatorRun/TPM.nii"}, "data":{"value":[["/input/local0/simulatorRun/sub1_t1w.nii","/input/local0/simulatorRun/sub1_t1w.nii.gz"]]}}
+
+python3 run_fmri.py {"options":{"value":6}, "registration_template":{"value":"/input/local0/simulatorRun/TPM.nii"}, "data":{"value":[["/input/local0/simulatorRun/BIDS_DIR"]]}}
+BIDS_DIR contains bids data
 
 success=True means program finished execution , despite the success or failure of the code
 This is to indicate to coinstac that program finished execution
 """
 import contextlib
-
-
 @contextlib.contextmanager
 def stdchannel_redirected(stdchannel, dest_filename):
     """
@@ -46,9 +47,7 @@ import ujson as json
 import warnings, os, glob, sys
 import nibabel as nib
 
-from bids.grabbids import BIDSLayout
-
-## Load Nipype spm interface ##
+# Load Nipype spm interface #
 from nipype.interfaces import spm
 import vbm_use_cases_layer
 
@@ -56,8 +55,7 @@ import vbm_use_cases_layer
 from nipype import logging
 logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
-
-#Create a dict to store all paths to softwares,templates & store parameters, names of output files
+#Create a dictionary to store all paths to softwares,templates & store parameters, names of output files
 
 template_dict = {
     'spm_version':
@@ -73,10 +71,10 @@ template_dict = {
     'scan_type':
     'T1w',
     'FWHM_SMOOTH': [10, 10, 10],
-    'dicom_dir':
-        '',
-    'dicom_output_dir':
-        '',
+    'bounding_box':
+    '',
+    'reorient_params':
+    '',
     'BIAS_REGULARISATION':
     0.0001,
     'FWHM_GAUSSIAN_SMOOTH_BIAS':
@@ -169,7 +167,8 @@ def software_check():
     return (spm.SPMCommand().version)
 
 def args_parser(args):
-    # Extract arguments from json
+    """ This function extracts options from arguments
+    """
     if 'smooth_fwhm' in args['input']:
         template_dict['FWHM_SMOOTH'] = args['input']['options']
 
@@ -189,8 +188,9 @@ def args_parser(args):
 
 
 def data_parser(args):
-
-    #Read input data from args
+    """ This function parses the type of data i.e BIDS, nifti files or Dicoms
+    and passes them to vbm_use_cases_layer.py
+    """
     data = args['input']['data']
     WriteDir = args['state']['outputDirectory']
 
@@ -203,7 +203,7 @@ def data_parser(args):
         bids_process = os.popen(cmd).read()
         bids_dir = data[0]
         if bids_process and template_dict['scan_type'] in bids_process:
-            computation_output = vbm_use_cases_layer.execute_pipeline(
+            computation_output = vbm_use_cases_layer.setup_pipeline(
                 data=bids_dir,
                 write_dir=WriteDir,
                 data_type='bids',
@@ -212,7 +212,7 @@ def data_parser(args):
     # Check if data has nifti files
     elif [x for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
         nifti_paths = data
-        computation_output = vbm_use_cases_layer.execute_pipeline(
+        computation_output = vbm_use_cases_layer.setup_pipeline(
             data=nifti_paths,
             write_dir=WriteDir,
             data_type='nifti',
@@ -226,7 +226,7 @@ def data_parser(args):
                 dicom_file = glob.glob(dcm + '/*')[0]
                 dicom_header_info=os.popen('strings' + ' ' + dicom_file + '|grep DICM').read()
                 if 'DICM' in dicom_header_info:dicom_dirs.append(dcm)
-        computation_output = vbm_use_cases_layer.execute_pipeline(
+        computation_output = vbm_use_cases_layer.setup_pipeline(
             data=dicom_dirs,
             write_dir=WriteDir,
             data_type='dicoms',
@@ -250,8 +250,11 @@ if __name__ == '__main__':
     if spm_check != template_dict['spm_version']:
         raise EnvironmentError("spm unable to start in vbm docker")
 
-    # The following block of code assigns the appropriate pre-processing function for input data format, based on Bids or nifti file paths in text file
+    #Read json args
     args = json.loads(sys.stdin.read())
 
+    #Parse args
     args_parser(args)
+
+    #Parse input data
     data_parser(args)
