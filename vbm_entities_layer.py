@@ -25,6 +25,15 @@ class Reorient:
 ## Segementation Node and settings ##
 class Segment:
     def __init__(self, **template_dict):
+        """
+        segment.node.inputs.channel_info: (a tuple of the form: (a float, a float, a tuple of the
+        form: (a boolean, a boolean)))
+        A tuple with the following fields:
+         - bias regularisation (0-10)
+         - FWHM of Gaussian smoothness of bias
+         - which maps to save (Corrected, Field) - a tuple of two boolean
+        values
+        """
         self.node = pe.Node(interface=spm.NewSegment(), name='segmentation')
         self.node.inputs.paths = template_dict['spm_path']
         self.node.inputs.channel_info = (
@@ -49,10 +58,14 @@ class List_Normalized_Images:
 ## Smoothing Node & Settings ##
 class Smooth:
     def __init__(self, **template_dict):
+        """
+               smooth.node.inputs.fwhm: (a list of from 3 to 3 items which are a float or a float)
+                3-list of fwhm for each dimension
+                This is the size of the Gaussian (in mm) for smoothing the preprocessed data by. This is typically between about 4mm and 12mm.
+        """
         self.node = pe.Node(interface=spm.Smooth(), name='smoothing')
         self.node.inputs.paths = template_dict['spm_path']
         self.node.inputs.fwhm = template_dict['FWHM_SMOOTH']
-
 
 ## Datsink Node that collects segmented, smoothed files and writes to temp_write_dir ##
 class Datasink:
