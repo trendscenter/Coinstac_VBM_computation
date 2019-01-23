@@ -423,6 +423,7 @@ def smooth_images(write_dir):
     from nipype.interfaces.io import DataSink
     smooth = pe.Node(interface=spm.Smooth(), name='smooth')
     smooth.inputs.in_files = glob.glob(os.path.join(write_dir, 'mwc*.nii'))
+    smooth.inputs.fwhm = template_dict['FWHM_SMOOTH']
     vbm_smooth_modulated_images = pe.Workflow(
         name="vbm_smooth_modulated_images")
     datasink = pe.Node(interface=DataSink(), name='datasink')
