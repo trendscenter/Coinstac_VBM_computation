@@ -527,7 +527,7 @@ def run_pipeline(write_dir,
 
                 # Smooth modulated images from segmentation node spm.Smooth()
                 smooth_images(
-                    os.path.join(vbm_out, template_dict['vbm_output_dirname']))
+                    os.path.join(vbm_out, template_dict['vbm_output_dirname']),**template_dict)
 
                 # Calculate correlation coefficient of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(
