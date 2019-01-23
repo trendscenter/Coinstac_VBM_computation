@@ -172,7 +172,7 @@ def software_check():
 def args_parser(args):
     """ This function extracts options from arguments
     """
-    if 'smooth_fwhm' in args['input']:
+    if 'options' in args['input']:
         template_dict['FWHM_SMOOTH'] = [float(args['input']['options'])] * 3
 
     if 'registration_template' in args['input']:
