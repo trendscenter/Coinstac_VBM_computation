@@ -417,7 +417,7 @@ def create_workflow_input(source, target, source_output, target_input):
     return (source, target, [(source_output, target_input)])
 
 
-def smooth_images(write_dir):
+def smooth_images(write_dir,**template_dict):
     """This function runs smoothing on input images. Ex: modulated images"""
     from nipype.interfaces import spm
     from nipype.interfaces.io import DataSink
@@ -430,8 +430,7 @@ def smooth_images(write_dir):
     datasink.inputs.base_directory = write_dir
     vbm_smooth_modulated_images.connect([(smooth, datasink, [('smoothed_files',
                                                               write_dir)])])
-    with stdchannel_redirected(sys.stderr, os.devnull):
-        vbm_smooth_modulated_images.run()
+    vbm_smooth_modulated_images.run()
 
 
 def run_pipeline(write_dir,
