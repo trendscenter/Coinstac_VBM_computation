@@ -173,7 +173,7 @@ def args_parser(args):
     """ This function extracts options from arguments
     """
     if 'smooth_fwhm' in args['input']:
-        template_dict['FWHM_SMOOTH'] = [args['input']['options']] * 3
+        template_dict['FWHM_SMOOTH'] = [float(args['input']['options'])] * 3
 
     if 'registration_template' in args['input']:
         if os.path.isfile(args['input']['registration_template']) and (str(
