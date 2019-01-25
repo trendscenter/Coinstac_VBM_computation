@@ -430,7 +430,8 @@ def smooth_images(write_dir,**template_dict):
     datasink.inputs.base_directory = write_dir
     vbm_smooth_modulated_images.connect([(smooth, datasink, [('smoothed_files',
                                                               write_dir)])])
-    vbm_smooth_modulated_images.run()
+    with stdchannel_redirected(sys.stderr, os.devnull):
+        vbm_smooth_modulated_images.run()
 
 
 def run_pipeline(write_dir,
