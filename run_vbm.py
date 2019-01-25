@@ -49,6 +49,8 @@ import ujson as json
 import warnings, os, glob, sys
 import nibabel as nib
 
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore")
 # Load Nipype spm interface #
 from nipype.interfaces import spm
 import vbm_use_cases_layer
@@ -129,13 +131,13 @@ template_dict = {
 """
 More info. on keys in template_dict
 
-spm_path is path to spm software inside docker . 
-SPM is Statistical Parametric Mapping toolbox for matlab 
+spm_path is path to spm software inside docker .
+SPM is Statistical Parametric Mapping toolbox for matlab
 Info. from http://www.fil.ion.ucl.ac.uk/spm/
-"Statistical Parametric Mapping refers to the construction and assessment of spatially extended statistical processes used to test hypotheses about functional imaging data. 
+"Statistical Parametric Mapping refers to the construction and assessment of spatially extended statistical processes used to test hypotheses about functional imaging data.
 These ideas have been instantiated in software that is called SPM.
-The SPM software package has been designed for the analysis of brain imaging data sequences. 
-The sequences can be a series of images from different cohorts, or time-series from the same subject. 
+The SPM software package has been designed for the analysis of brain imaging data sequences.
+The sequences can be a series of images from different cohorts, or time-series from the same subject.
 The current release is designed for the analysis of fMRI, PET, SPECT, EEG and MEG."
 
 tpm_path is the path where the SPM structural template nifti file is stored
@@ -173,7 +175,7 @@ def args_parser(args):
     """ This function extracts options from arguments
     """
     if 'options' in args['input']:
-        template_dict['FWHM_SMOOTH'] = [float(args['input']['options'])] * 3
+        template_dict['FWHM_SMOOTH'] = [float(args['input']['options'])]*3
 
     if 'registration_template' in args['input']:
         if os.path.isfile(args['input']['registration_template']) and (str(
@@ -212,7 +214,6 @@ def data_parser(args):
                 write_dir=WriteDir,
                 data_type='bids',
                 **template_dict)
-            sys.stdout.write(computation_output)
     # Check if data has nifti files
     elif [x
           for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
