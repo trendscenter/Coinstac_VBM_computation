@@ -36,7 +36,7 @@ RUN yum install -y -q libXext.x86_64 libXt.x86_64 \
     && rm -rf /var/cache/yum/* /tmp/* /var/tmp/*
 # Install MATLAB Compiler Runtime
 WORKDIR /opt
-RUN curl -sSL -o mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2018a/deployment_files/R2018a/installers/glnxa64/MCR_R2018a_glnxa64_installer.zip \
+RUN curl -sSL -o mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2018b/deployment_files/R2018b/installers/glnxa64/MCR_R2018b_glnxa64_installer.zip \
     && unzip -q mcr.zip -d mcrtmp \
     && mcrtmp/install -destinationFolder /opt/mcr -mode silent -agreeToLicense yes \
     && rm -rf mcrtmp mcr.zip /tmp/*
