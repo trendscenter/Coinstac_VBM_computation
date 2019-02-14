@@ -63,9 +63,9 @@ logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
 template_dict = {
     'spm_version':
-    '12.7507',
+    '12.7169',
     'matlab_cmd':
-    '/opt/spm12/run_spm12.sh /opt/mcr/v95 script',
+    '/opt/spm12/run_spm12.sh /opt/mcr/v92 script',
     'spm_path':
     '/opt/spm12/fsroot',
     'tpm_path':
@@ -201,21 +201,8 @@ def data_parser(args):
     data = args['input']['data']
     WriteDir = args['state']['outputDirectory']
 
-    # Check if data is BIDS
-    if os.path.isfile(os.path.join(data[0],
-                                   'dataset_description.json')) and os.access(
-                                       WriteDir, os.W_OK):
-        cmd = "bids-validator {0}".format(data[0])
-        bids_process = os.popen(cmd).read()
-        bids_dir = data[0]
-        if bids_process and template_dict['scan_type'] in bids_process:
-            computation_output = vbm_use_cases_layer.setup_pipeline(
-                data=bids_dir,
-                write_dir=WriteDir,
-                data_type='bids',
-                **template_dict)
     # Check if data has nifti files
-    elif [x
+    if [x
           for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
         nifti_paths = data
         computation_output = vbm_use_cases_layer.setup_pipeline(
@@ -240,6 +227,20 @@ def data_parser(args):
             data_type='dicoms',
             **template_dict)
         sys.stdout.write(computation_output)
+    # Check if data is BIDS
+    elif os.path.isfile(os.path.join(data[0],
+                                   'dataset_description.json')) and os.access(
+                                       WriteDir, os.W_OK):
+        cmd = "bids-validator {0}".format(data[0])
+        bids_process = os.popen(cmd).read()
+        bids_dir = data[0]
+        if bids_process and template_dict['scan_type'] in bids_process:
+            computation_output = vbm_use_cases_layer.setup_pipeline(
+                data=bids_dir,
+                write_dir=WriteDir,
+                data_type='bids',
+                **template_dict)
+            sys.stdout.write(computation_output)
     else:
         sys.stdout.write(
             json.dumps({
