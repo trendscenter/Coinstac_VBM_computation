@@ -68,7 +68,7 @@ RUN pip install cython future pillow tornado==5.0.2 ujson
 
 #Remove user warning from dicom init file
 RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.5/site-packages/dicom/__init__.py
-RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.5/site-packages/bids/grabbids/__init__.py
+#RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.5/site-packages/bids/grabbids/__init__.py
 
 
 RUN groupadd --gid 1000 node \
