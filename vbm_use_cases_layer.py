@@ -472,8 +472,7 @@ def run_pipeline(write_dir,
                 sub_id = 'subID-' + str(id)
                 session = ''
                 nii_output = ((each_sub).split('/')[-1]).split('.gz')[0]
-                with stdchannel_redirected(sys.stderr, os.devnull):
-                    n1_img = nib.load(each_sub)
+                n1_img = nib.load(each_sub)
 
             if data_type == 'dicoms':
                 id = id + 1
@@ -492,7 +491,7 @@ def run_pipeline(write_dir,
                 dcm_nii_convert.inputs.output_dir = vbm_out
                 with stdchannel_redirected(sys.stderr, os.devnull):
                     dcm_nii_convert.run()
-                    n1_img = nib.load(glob.glob(os.path.join(vbm_out, '*.nii'))[0])
+                n1_img = nib.load(glob.glob(os.path.join(vbm_out, '*.nii'))[0])
 
             # Directory in which vbm outputs will be written
             vbm_out = os.path.join(write_dir, sub_id, session, 'anat')
@@ -528,9 +527,8 @@ def run_pipeline(write_dir,
                     vbm_preprocess.run()
 
                 # Smooth modulated images from segmentation node spm.Smooth()
-                with stdchannel_redirected(sys.stderr, os.devnull):
-                    smooth_images(
-                        os.path.join(vbm_out, template_dict['vbm_output_dirname']),**template_dict)
+                smooth_images(
+                    os.path.join(vbm_out, template_dict['vbm_output_dirname']),**template_dict)
 
                 # Calculate correlation coefficient of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(
@@ -543,10 +541,9 @@ def run_pipeline(write_dir,
 
                 # Convert wc1*.nii to wc1*.png
                 label = sub_id + session
-                with stdchannel_redirected(sys.stderr, os.devnull):
-                    nii_to_image_converter(
-                        os.path.join(vbm_out, template_dict['vbm_output_dirname']),
-                        label, **template_dict)
+                nii_to_image_converter(
+                    os.path.join(vbm_out, template_dict['vbm_output_dirname']),
+                    label, **template_dict)
 
         except Exception as e:
             # If the above code fails for any reason update the error log for the subject id
