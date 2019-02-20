@@ -528,8 +528,9 @@ def run_pipeline(write_dir,
                     vbm_preprocess.run()
 
                 # Smooth modulated images from segmentation node spm.Smooth()
-                smooth_images(
-                    os.path.join(vbm_out, template_dict['vbm_output_dirname']),**template_dict)
+                with stdchannel_redirected(sys.stderr, os.devnull):
+                    smooth_images(
+                        os.path.join(vbm_out, template_dict['vbm_output_dirname']),**template_dict)
 
                 # Calculate correlation coefficient of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(
@@ -542,9 +543,10 @@ def run_pipeline(write_dir,
 
                 # Convert wc1*.nii to wc1*.png
                 label = sub_id + session
-                nii_to_image_converter(
-                    os.path.join(vbm_out, template_dict['vbm_output_dirname']),
-                    label, **template_dict)
+                with stdchannel_redirected(sys.stderr, os.devnull):
+                    nii_to_image_converter(
+                        os.path.join(vbm_out, template_dict['vbm_output_dirname']),
+                        label, **template_dict)
 
         except Exception as e:
             # If the above code fails for any reason update the error log for the subject id
