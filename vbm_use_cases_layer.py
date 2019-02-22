@@ -39,7 +39,7 @@ with warnings.catch_warnings():
 import ujson as json
 
 # Load bids layout interface for parsing bids data to extract T1w scans,subject names etc.
-from bids import BIDSLayout
+from bids.grabbids import BIDSLayout
 
 import nibabel as nib
 import nipype.pipeline.engine as pe
@@ -89,7 +89,7 @@ def setup_pipeline(data='', write_dir='', data_type=None, **template_dict):
             # Runs the pipeline on each subject serially
             layout = BIDSLayout(data)
             smri_data = layout.get(
-                datatype='anat', extensions='.nii.gz')
+                type=template_dict['scan_type'], extensions='.nii.gz')
             return run_pipeline(
                 write_dir,
                 smri_data,
@@ -457,15 +457,15 @@ def run_pipeline(write_dir,
 
             # Assign subject,session id and input nifiti file for reorienation node
             if data_type == 'bids':
-                sub_id = 'sub-' + each_sub.entities['subject']
-                if 'session' in each_sub.entities:
-                    session = each_sub.entities['session']
+                sub_id = 'sub-' + each_sub.subject
+                session_id = getattr(each_sub, 'session', None)
+                if session_id is not None:
+                    session = 'ses-' + getattr(each_sub, 'session', None)
                 else:
                     session = ''
                 nii_output = ((
                     each_sub.filename).split('/')[-1]).split('.gz')[0]
-                with stdchannel_redirected(sys.stderr, os.devnull):
-                    n1_img = nib.load(each_sub.filename)
+                n1_img = nib.load(each_sub.filename)
 
             if data_type == 'nifti':
                 id = id + 1

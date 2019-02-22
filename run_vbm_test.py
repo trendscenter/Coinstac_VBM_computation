@@ -203,14 +203,53 @@ def data_parser(args):
 
     # Check if data has nifti files
     if [x
-          for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
+        for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
         nifti_paths = data
-        computation_output = vbm_use_cases_layer.setup_pipeline(
-            data=nifti_paths,
-            write_dir=WriteDir,
-            data_type='nifti',
-            **template_dict)
-        sys.stdout.write(computation_output)
+
+        try:
+            nib.load(data[0])
+        except Exception as e:
+            os.makedirs(os.path.join(WriteDir,'test_dir'), exist_ok=True)
+            sys.stdout.write(
+                json.dumps({
+                    "output": {
+                        "message":
+                            "Error: " + str(e) + "Listing input files" + str(
+                                glob.glob(os.path.dirname(data[0]) + '/*')) + "Input data given: " + str(
+                                data) + " Read permissions for input data: " + str(
+                                os.access(data[0], os.R_OK)) + " Write dir: " + str(
+                                WriteDir) + " Write permissions for WriteDir: " + str(os.access(WriteDir,
+                                                                                                os.W_OK)) + str(
+                                glob.glob(WriteDir + '/*')) +" Input data not found/Can not write to target directory"
+                    },
+                    "cache": {},
+                    "success": True
+                }))
+        else:
+            computation_output = vbm_use_cases_layer.setup_pipeline(
+                data=nifti_paths,
+                write_dir=WriteDir,
+                data_type='nifti',
+                **template_dict)
+            #sys.stdout.write(computation_output)
+
+            os.makedirs(os.path.join(WriteDir,'test_dir'), exist_ok=True)
+            sys.stdout.write(
+                json.dumps({
+                    "output": {
+                        "message":
+                            "Listing input files" + str(
+                                glob.glob(os.path.dirname(data[0]) + '/*')) + "Input data given: " + str(
+                                data) + " Read permissions for input data: " + str(
+                                os.access(data[0], os.R_OK)) + " Write dir: " + str(
+                                WriteDir) + " Write permissions for WriteDir: " + str(os.access(WriteDir,
+                                                                                                os.W_OK)) + str(
+                                glob.glob(WriteDir + '/*')) +" Input data not found/Can not write to target directory"+str(computation_output)
+                    },
+                    "cache": {},
+                    "success": True
+                }))
+
     # Check if inputs are dicoms
     elif [x
           for x in data if os.path.isdir(x)] and os.access(WriteDir, os.W_OK):
@@ -229,8 +268,8 @@ def data_parser(args):
         sys.stdout.write(computation_output)
     # Check if data is BIDS
     elif os.path.isfile(os.path.join(data[0],
-                                   'dataset_description.json')) and os.access(
-                                       WriteDir, os.W_OK):
+                                     'dataset_description.json')) and os.access(
+        WriteDir, os.W_OK):
         cmd = "bids-validator {0}".format(data[0])
         bids_process = os.popen(cmd).read()
         bids_dir = data[0]
@@ -242,15 +281,23 @@ def data_parser(args):
                 **template_dict)
             sys.stdout.write(computation_output)
     else:
+        os.makedirs(os.path.join(WriteDir, 'test_dir'), exist_ok=True)
         sys.stdout.write(
             json.dumps({
                 "output": {
                     "message":
-                    "Input data given: "+str(data)+" Read permissions for input data: "+str(os.access(data[0], os.R_OK))+" Write dir: "+str(WriteDir)+" Write permissions for WriteDir: "+str(os.access(WriteDir, os.W_OK))+" Input data not found/Can not write to target directory"
+                        "Listing input files" + str(
+                            glob.glob(os.path.dirname(data[0]) + '/*')) + "Input data given: " + str(
+                            data) + " Read permissions for input data: " + str(
+                            os.access(data[0], os.R_OK)) + " Write dir: " + str(
+                            WriteDir) + " Write permissions for WriteDir: " + str(os.access(WriteDir,
+                                                                                            os.W_OK)) + str(
+                                glob.glob(WriteDir + '/*')) + " Input data not found/Can not write to target directory"
                 },
                 "cache": {},
                 "success": True
             }))
+
 
 
 if __name__ == '__main__':

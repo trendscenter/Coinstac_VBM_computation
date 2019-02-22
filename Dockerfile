@@ -10,6 +10,7 @@ RUN yum install -y -q bzip2 ca-certificates curl unzip \
     && yum clean packages \
     && rm -rf /var/cache/yum/* /tmp/* /var/tmp/*
 
+
 #-------------------------------------------------
 # Install Miniconda, and set up Python environment
 #-------------------------------------------------
@@ -20,12 +21,19 @@ RUN curl -ssL -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-lat
     && /opt/miniconda/bin/conda update -n base conda \
     && /opt/miniconda/bin/conda config --add channels conda-forge \
     && /opt/miniconda/bin/conda create -y -q -n default python=3.5.1 \
-    	traits pandas \
-#    && conda clean -y --all \
-    && pip install -U -q --no-cache-dir pip \
-    && pip install -q --no-cache-dir \
-    	nipype \
     && rm -rf /opt/miniconda/[!envs]*
+
+# Install Bids Validator using npm
+RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash - \
+    && yum install -y nodejs gcc \
+    && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
+    && npm install -g bids-validator
+
+#Install other python packages
+RUN pip install med2image
+RUN pip install --no-cache-dir -r /computation/requirements.txt
+RUN pip install pillow tornado==5.0.2
+
 
 #----------------------
 # Install MCR and SPM12
@@ -54,21 +62,11 @@ ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
     
 RUN chmod -R 777 /opt/spm12
 
-# Install Bids Validator using npm
-RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash - \
-    && yum install -y nodejs gcc \
-    && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
-    && npm install -g bids-validator
-
-#Install other python packages
-RUN pip install med2image pybids coverage
-RUN pip install --no-cache-dir -r /computation/requirements.txt
-RUN pip install cython future pillow tornado==5.0.2 ujson
 
 
 #Remove user warning from dicom init file
 RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.5/site-packages/dicom/__init__.py
-#RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.5/site-packages/bids/grabbids/__init__.py
+RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.5/site-packages/bids/grabbids/__init__.py
 
 
 RUN groupadd --gid 1000 node \
