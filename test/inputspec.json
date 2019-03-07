@@ -1,1 +1,1 @@
-{"options":{"value":6}, "data":{"value":["/input/local0/simulatorRun/sub-04/anat/sub-04_T1w.nii.gz","/input/local0/simulatorRun/sub-02/anat/sub-02_T1w.nii.gz"]}}
+{"options":{"value":6}, "data":{"value":["sub-04_T1w.nii.gz","sub-02_T1w.nii.gz"]}}
