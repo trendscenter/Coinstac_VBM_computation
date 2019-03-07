@@ -198,7 +198,7 @@ def data_parser(args):
     """ This function parses the type of data i.e BIDS, nifti files or Dicoms
     and passes them to vbm_use_cases_layer.py
     """
-    data = args['input']['data']
+    data = [ args['state']['baseDirectory']+'/'+file_names for file_names in args['input']['data'] ]
     WriteDir = args['state']['outputDirectory']
 
     # Check if data has nifti files
