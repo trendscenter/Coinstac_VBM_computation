@@ -41,7 +41,7 @@
 
 	"regression_file_input_type":{
 "type":"string",
-"select_options":["swc1","swc2","swc3"]
+"select_options":["swc1","swc2","swc3"],
 	"conditionalToggle":{
 		"variable":"variable-name",
 		"toggle":"boolean"
