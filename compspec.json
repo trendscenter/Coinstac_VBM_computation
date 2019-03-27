@@ -37,19 +37,35 @@
 	"standalone":{
 "type":"boolean"
 },
+
+
+	"regression_file_input_type":{
+"type":"string",
+"select_options":["swc1","swc2","swc3"]
+	"conditionalToggle":{
+		"variable":"variable-name",
+		"toggle":"boolean"
+	}
+},
+	
 	  
  "covariates":
       {
         "label": "Covariates",
         "type": "array",
-        "items": ["boolean", "number"]
+        "items": ["boolean", "number"],
+	      	"conditionalToggle":{
+		"variable":"variable-name",
+		"toggle":"boolean"
+	}
       }
 },
 
   
     "output": {
       "covariates":{
-      "type": "string"
+      "type": "array",
+	"items": ["boolean", "number"]
       },
       "message":{
       "type": "string",
