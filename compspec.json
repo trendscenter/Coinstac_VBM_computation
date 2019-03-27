@@ -43,6 +43,7 @@
 "type":"string",
 "defaultValue": "swc1",
 "select_options":["swc1","swc2","swc3"],
+"description":"Select type of vbm output for regression:Smoothed warped 1)Grey matter,2)White matter,3)Cerebro spinal fluid",
 	"conditionalToggle":{
 		"variable":"variable-name",
 		"toggle":"boolean"
