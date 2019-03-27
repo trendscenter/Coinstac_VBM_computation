@@ -58,6 +58,21 @@
 		"variable":"variable-name",
 		"toggle":"boolean"
 	}
+      },
+	
+	"lambda":
+      {
+        "defaultValue": 0,
+        "label": "Lambda",
+        "max": 1,
+        "min": 0,
+        "step": 0.05,
+        "type": "number",
+        "source": "owner",
+	      	"conditionalToggle":{
+		"variable":"variable-name",
+		"toggle":"boolean"
+	}
       }
 },
 
