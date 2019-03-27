@@ -53,7 +53,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
 # Load Nipype spm interface #
 from nipype.interfaces import spm
-import vbm_use_cases_layer
+import vbm_use_cases_layer,vbm_standalone_use_cases_layer
 
 #Stop printing nipype.workflow info to stdout
 from nipype import logging
@@ -63,9 +63,9 @@ logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
 template_dict = {
     'spm_version':
-    '12.7507',
+    '12.7169',
     'matlab_cmd':
-    '/opt/spm12/run_spm12.sh /opt/mcr/v95 script',
+    '/opt/spm12/run_spm12.sh /opt/mcr/v92 script',
     'spm_path':
     '/opt/spm12/fsroot',
     'tpm_path':
@@ -74,6 +74,8 @@ template_dict = {
     os.path.join('/computation', 'transform.mat'),
     'scan_type':
     'T1w',
+    'standalone':False,
+    'covariates':list(),
     'FWHM_SMOOTH': [10, 10, 10],
     'bounding_box':
     '',
@@ -87,6 +89,8 @@ template_dict = {
     'vbm_spm12',
     'output_zip_dir':
     'vbm_outputs',
+    'log_filename':
+    'vbm_log.txt',
     'qa_flagged_filename':
     'QA_flagged_subjects.txt',
     'display_image_name':
@@ -98,6 +102,12 @@ template_dict = {
     'wc1Re.nii',
     'qc_nifti':
     'swc1*nii',
+    'regression_file':
+    'swc1Re.nii',
+    'vbm_append_string':
+    'vbm_prepoc',
+    'qc_threshold':
+    70,
     'vbm_qc_filename':
     'vbm_corr_value.txt',
     'outputs_manual_name':
@@ -106,18 +116,18 @@ template_dict = {
     'Please read outputs_description.txt for description of pre-processed output files and quality_control_readme.txt for quality control measurement.'
     'These files are placed under the pre-processed data.',
     'flag_warning':
-    ' QC warning: Only half of the data is pre-processed or passed the QA, please check the data!',
+    ' QC warning: Atleast 30% of input data did not pass QA or could not be pre-processed, please check the data, vbm_log.txt and QA_flagged_subjects.txt',
     'bids_outputs_manual_content':
     "Prefixes descriptions for segmented images:c1-Gray matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
-    "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
+    "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) Default:[10 10 10]\nFor more info. please refer to spm12 manual here: "
     "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
     'nifti_outputs_manual_content':
-    "sub-1,sub-2,sub-* denotes each nifti file with respect to the order of the nifti paths given"
+    "subID-1,subID-2,subID-* denotes each nifti file with respect to the order of the nifti paths given"
     "\nPrefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
     "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
     "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
     'dicoms_outputs_manual_content':
-    "sub-1,sub-2,sub-* denotes each session's dicom directory with respect to the order of the dicom directory paths given"
+    "subID-1,subID-2,subID-* denotes each session's dicom directory with respect to the order of the dicom directory paths given"
     "\nPrefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
     "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
     "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
@@ -177,6 +187,12 @@ def args_parser(args):
     if 'options' in args['input']:
         template_dict['FWHM_SMOOTH'] = [float(args['input']['options'])]*3
 
+    if  args['input']['standalone']:
+        template_dict['standalone']=args['input']['standalone']
+
+    if 'covariates' in args['input']:
+        template_dict['covariates']=args['input']['covariates']
+
     if 'registration_template' in args['input']:
         if os.path.isfile(args['input']['registration_template']) and (str(
             ((nib.load(template_dict['tpm_path'])).shape)) == str(
@@ -198,47 +214,33 @@ def data_parser(args):
     """ This function parses the type of data i.e BIDS, nifti files or Dicoms
     and passes them to vbm_use_cases_layer.py
     """
-    data = [ args['state']['baseDirectory']+'/'+file_names for file_names in args['input']['data'] ]
+
+
+    if template_dict['standalone']:
+        data = [args['state']['baseDirectory'] + '/' + file_names for file_names in args['input']['data']]
+    else:
+        data=[args['state']['baseDirectory'] + '/' +subject[0] for subject in args['input']['covariates'][0][0][1:]]
+        template_dict['covariates']=args['input']['covariates']
+
+
+
     WriteDir = args['state']['outputDirectory']
 
     # Check if data has nifti files
-    if [x
-          for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
+    if [x for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
         nifti_paths = data
-        computation_output = vbm_use_cases_layer.setup_pipeline(
-            data=nifti_paths,
-            write_dir=WriteDir,
-            data_type='nifti',
-            **template_dict)
-        sys.stdout.write(computation_output)
-    # Check if inputs are dicoms
-    elif [x
-          for x in data if os.path.isdir(x)] and os.access(WriteDir, os.W_OK):
-        dicom_dirs = list()
-        for dcm in data:
-            if os.path.isdir(dcm) and os.listdir(dcm):
-                dicom_file = glob.glob(dcm + '/*')[0]
-                dicom_header_info = os.popen('strings' + ' ' + dicom_file +
-                                             '|grep DICM').read()
-                if 'DICM' in dicom_header_info: dicom_dirs.append(dcm)
-        computation_output = vbm_use_cases_layer.setup_pipeline(
-            data=dicom_dirs,
-            write_dir=WriteDir,
-            data_type='dicoms',
-            **template_dict)
-        sys.stdout.write(computation_output)
-    # Check if data is BIDS
-    elif os.path.isfile(os.path.join(data[0],
-                                   'dataset_description.json')) and os.access(
-                                       WriteDir, os.W_OK):
-        cmd = "bids-validator {0}".format(data[0])
-        bids_process = os.popen(cmd).read()
-        bids_dir = data[0]
-        if bids_process and template_dict['scan_type'] in bids_process:
+        if template_dict['standalone']:
             computation_output = vbm_use_cases_layer.setup_pipeline(
-                data=bids_dir,
+                data=nifti_paths,
                 write_dir=WriteDir,
-                data_type='bids',
+                data_type='nifti',
+                **template_dict)
+            sys.stdout.write(computation_output)
+        else:
+            computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
+                data=nifti_paths,
+                write_dir=WriteDir,
+                data_type='nifti',
                 **template_dict)
             sys.stdout.write(computation_output)
     else:
