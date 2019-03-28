@@ -2,67 +2,66 @@
   "meta": {
     "id": "preprocess-vbm",
     "name": "VBM (Voxel Based Morphometry) on T1W scans",
-    "version":  "v1.0",
+    "version": "v1.0",
     "repository": "github.com/MRN-Code/Coinstac_VBM_computation.git",
     "description": "This computation runs Voxel Based Morphometry on structural T1 weighted MRI nifti scans using SPMv12 standalone and MATLAB Runtimev713. Each scan takes approximately 5 mins to run on a system with 2.3 GHz,i5 equivalent processor, 8GB RAM. Each scan output directory takes about 300MB space. Please make sure to have the space and resources.",
-    "tags": ["vbm", "preprocess"], 
+    "tags": [
+      "vbm",
+      "preprocess"
+    ],
     "preprocess": true
   },
   "computation": {
     "type": "docker",
-   "dockerImage": "spanta28/coinstac_vbm_docker",
+    "dockerImage": "spanta28/coinstac_vbm_docker",
     "command": [
       "python",
-      "\/computation\/run_vbm.py"
+      "/computation/run_vbm.py"
     ],
-
-
-"input":{
-
-"options":{
-"type":"number",
-"label": "Smoothing FWHM in mm",
-"defaultValue": 10,
-"min": 0,
-"max": 10,
-"step": 1,
-"description":"Full width half maximum smoothing kernel value in x,y,z directions"
-},
-
-"data":{
-"type":"array",
-"label": "Nifti files"
-},
-
-	"standalone":{
-"type":"boolean"
-},
-
-
-	"regression_file_input_type":{
-"type":"string",
-"defaultValue": "swc1",
-"select_options":["swc1","swc2","swc3"],
-"description":"Select type of vbm output for regression:Smoothed warped 1)Grey matter,2)White matter,3)Cerebro spinal fluid",
-	"conditionalToggle":{
-		"variable":"variable-name",
-		"toggle":"boolean"
-	}
-},
-	  
- "covariates":
-      {
+    "input": {
+      "options": {
+        "type": "number",
+        "label": "Smoothing FWHM in mm",
+        "defaultValue": 10,
+        "min": 0,
+        "max": 10,
+        "step": 1,
+        "description": "Full width half maximum smoothing kernel value in x,y,z directions"
+      },
+      "data": {
+        "type": "array",
+        "label": "Nifti files"
+      },
+      "standalone": {
+        "type": "boolean"
+      },
+      "regression_file_input_type": {
+        "type": "string",
+        "defaultValue": "swc1",
+        "select_options": [
+          "swc1",
+          "swc2",
+          "swc3"
+        ],
+        "description": "Select type of vbm output for regression:Smoothed warped 1)Grey matter,2)White matter,3)Cerebro spinal fluid",
+        "conditionalToggle": {
+          "variable": "variable-name",
+          "toggle": "boolean"
+        }
+      },
+      "covariates": {
         "label": "Covariates",
         "type": "array",
-        "items": ["boolean", "number"],
-	      	"conditionalToggle":{
-		"variable":"variable-name",
-		"toggle":"boolean"
-	}
+        "items": [
+          "boolean",
+          "number"
+        ],
+        "conditionalToggle": {
+          "variable": "variable-name",
+          "toggle": "boolean"
+        }
       },
-	
-	"lambda":
-      {
+      "lambda": {
         "defaultValue": 0,
         "label": "Lambda",
         "max": 1,
@@ -70,24 +69,24 @@
         "step": 0.05,
         "type": "number",
         "source": "owner",
-	      	"conditionalToggle":{
-		"variable":"variable-name",
-		"toggle":"boolean"
-	}
+        "conditionalToggle": {
+          "variable": "variable-name",
+          "toggle": "boolean"
+        }
       }
-},
-
-  
+    },
     "output": {
-      "covariates":{
-      "type": "array",
-	"items": ["boolean", "number"]
+      "covariates": {
+        "type": "array",
+        "items": [
+          "boolean",
+          "number"
+        ]
       },
-      "message":{
-      "type": "string",
-      "description":"Output message from VBM step"
+      "message": {
+        "type": "string",
+        "description": "Output message from VBM step"
       }
-	}
-
+    }
   }
 }
