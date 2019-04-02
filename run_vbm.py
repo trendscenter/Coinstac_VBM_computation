@@ -76,6 +76,9 @@ template_dict = {
     'T1w',
     'standalone':False,
     'covariates':list(),
+    'regression_data':list(),
+    'regression_file_input_type':
+        'swc1',
     'FWHM_SMOOTH': [10, 10, 10],
     'bounding_box':
     '',
@@ -185,18 +188,19 @@ def args_parser(args):
     """ This function extracts options from arguments
     """
     if 'options' in args['input']:
-        template_dict['FWHM_SMOOTH'] = [float(args['input']['options'])]*3
+        template_dict['FWHM_SMOOTH'] = [float(args['input']['options'])] * 3
 
-    if  args['input']['standalone']:
-        template_dict['standalone']=args['input']['standalone']
-
-    if 'covariates' in args['input']:
-        template_dict['covariates']=args['input']['covariates']
+    if args['input']['standalone']:
+        template_dict['standalone'] = args['input']['standalone']
+    else:
+        template_dict['covariates'] = args['input']['covariates']
+        template_dict['regression_data'] = args['input']['data']
+        template_dict['regression_file_input_type'] = args['input']['regression_file_input_type']
 
     if 'registration_template' in args['input']:
         if os.path.isfile(args['input']['registration_template']) and (str(
-            ((nib.load(template_dict['tpm_path'])).shape)) == str(
-                ((nib.load(args['input']['registration_template'])).shape))):
+                ((nib.load(template_dict['tpm_path'])).shape)) == str(
+            ((nib.load(args['input']['registration_template'])).shape))):
             template_dict['tpm_path'] = args['input']['registration_template']
         else:
             sys.stdout.write(
@@ -215,14 +219,10 @@ def data_parser(args):
     and passes them to vbm_use_cases_layer.py
     """
 
-
     if template_dict['standalone']:
         data = [args['state']['baseDirectory'] + '/' + file_names for file_names in args['input']['data']]
     else:
-        data=[args['state']['baseDirectory'] + '/' +subject[0] for subject in args['input']['covariates'][0][0][1:]]
-        template_dict['covariates']=args['input']['covariates']
-
-
+        data = [args['state']['baseDirectory'] + '/' + subject[0] for subject in args['input']['covariates'][0][0][1:]]
 
     WriteDir = args['state']['outputDirectory']
 
@@ -248,25 +248,35 @@ def data_parser(args):
             json.dumps({
                 "output": {
                     "message":
-                    "Input data given: "+str(data)+" Read permissions for input data: "+str(os.access(data[0], os.R_OK))+" Write dir: "+str(WriteDir)+" Write permissions for WriteDir: "+str(os.access(WriteDir, os.W_OK))+" Input data not found/Can not write to target directory"
+                        "Input data given: " + str(data) + " Read permissions for input data: " + str(
+                            os.access(data[0], os.R_OK)) + " Write dir: " + str(
+                            WriteDir) + " Write permissions for WriteDir: " + str(
+                            os.access(WriteDir, os.W_OK)) + " Input data not found/Can not write to target directory"
                 },
                 "cache": {},
                 "success": True
             }))
 
 
+
+
 if __name__ == '__main__':
-    # Check if spm is running
-    with stdchannel_redirected(sys.stderr, os.devnull):
-        spm_check = software_check()
-    if spm_check != template_dict['spm_version']:
-        raise EnvironmentError("spm unable to start in vbm docker")
 
-    #Read json args
-    args = json.loads(sys.stdin.read())
+    try:
+        # Check if spm is running
+        with stdchannel_redirected(sys.stderr, os.devnull):
+            spm_check = software_check()
+        if spm_check != template_dict['spm_version']:
+            raise EnvironmentError("spm unable to start in vbm docker")
 
-    #Parse args
-    args_parser(args)
+        # Read json args
+        args = json.loads(sys.stdin.read())
 
-    #Parse input data
-    data_parser(args)
+        # Parse args
+        args_parser(args)
+
+        # Parse input data
+        data_parser(args)
+    except Exception as e:
+        sys.stderr.write('Unable to read input data or parse inputspec.json Error_log:'+str(e))
+
