@@ -51,7 +51,7 @@ RUN curl -sSL -o mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2018b
 
  # Install standalone SPM
 WORKDIR /opt
-RUN curl -sSL -o spm.zip http://www.fil.ion.ucl.ac.uk/spm/download/restricted/utopia/dev/spm12_latest_Linux_R2018b.zip \
+RUN curl -sSL -o spm.zip http://www.fil.ion.ucl.ac.uk/spm/download/restricted/utopia/dev/soon_gone/spm12_latest_Linux_R2018b.zip \
     && unzip -q spm.zip \
     && unzip /opt/spm12/spm12.ctf -d /opt/spm12/ \
     && rm -rf spm.zip
