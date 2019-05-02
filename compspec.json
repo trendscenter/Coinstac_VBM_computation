@@ -35,6 +35,30 @@
       "standalone": {
         "type": "boolean"
       },
+      "reorient_params_x_mm": {
+        "type": "number",
+        "label": "x in mm",
+        "defaultValue": 0,
+        "min": 0,
+        "max": 50,
+        "description": "reorient the image along x axis in mm"
+      },
+        "reorient_params_y_mm": {
+        "type": "number",
+        "label": "y in mm",
+        "defaultValue": 0,
+        "min": 0,
+        "max": 50,
+        "description": "reorient the image along y axis in mm"
+      },
+        "reorient_params_z_mm": {
+        "type": "number",
+        "label": "z in mm",
+        "defaultValue": 0,
+        "min": 0,
+        "max": 50,
+        "description": "reorient the image along z axis in mm"
+      },
       "regression_file_input_type": {
         "type": "string",
         "defaultValue": "swc1",
