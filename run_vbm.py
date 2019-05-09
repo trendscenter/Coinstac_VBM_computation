@@ -230,14 +230,14 @@ def data_parser(args):
     if [x for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
         nifti_paths = data
         if template_dict['standalone']:
-            computation_output = vbm_use_cases_layer.setup_pipeline(
+            computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
                 data=nifti_paths,
                 write_dir=WriteDir,
                 data_type='nifti',
                 **template_dict)
             sys.stdout.write(computation_output)
         else:
-            computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
+            computation_output = vbm_use_cases_layer.setup_pipeline(
                 data=nifti_paths,
                 write_dir=WriteDir,
                 data_type='nifti',
