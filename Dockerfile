@@ -67,7 +67,7 @@ RUN chmod -R 777 /opt/spm12
 #Remove user warnings
 RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.5/site-packages/dicom/__init__.py
 RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.5/site-packages/bids/grabbids/__init__.py 
-RUN sed -i '6,$d' /opt/miniconda/envs/default/lib/python3.5/site-packages/sklearn/externals/joblib/__init__.py 
+#RUN sed -i '6,$d' /opt/miniconda/envs/default/lib/python3.5/site-packages/sklearn/externals/joblib/__init__.py 
 
 RUN groupadd --gid 1000 node \
   && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
