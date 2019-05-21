@@ -16,7 +16,7 @@ BIDS_DIR contains bids data
 success=True means program finished execution , despite the success or failure of the code
 This is to indicate to coinstac that program finished execution
 """
-import contextlib
+import contextlib,traceback
 
 
 @contextlib.contextmanager
@@ -79,6 +79,14 @@ template_dict = {
     'regression_data':list(),
     'regression_file_input_type':
         'swc1',
+    'regression_dir_name':
+        'regression_input_files',
+    'regression_file':
+        'swc1Re.nii',
+    'regression_voxel_size':
+        (4.0, 4.0, 4.0),
+    'regression_resample_method':
+    'Li',
     'FWHM_SMOOTH': [10, 10, 10],
     'bounding_box':
     '',
@@ -105,8 +113,6 @@ template_dict = {
     'wc1Re.nii',
     'qc_nifti':
     'swc1*nii',
-    'regression_file':
-    'swc1Re.nii',
     'vbm_append_string':
     'vbm_prepoc',
     'qc_threshold':
@@ -278,5 +284,5 @@ if __name__ == '__main__':
         # Parse input data
         data_parser(args)
     except Exception as e:
-        sys.stderr.write('Unable to read input data or parse inputspec.json Error_log:'+str(e))
+        sys.stderr.write('Unable to read input data or parse inputspec.json Error_log:'+str(e)+str(traceback.format_exc()))
 

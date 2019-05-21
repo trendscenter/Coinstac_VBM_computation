@@ -1,12 +1,9 @@
 FROM centos:7
 
-WORKDIR /computation
-ADD . /computation
-
 #----------------------------
 # Install common dependencies
 #----------------------------
-RUN yum install -y -q bzip2 ca-certificates curl unzip \
+RUN yum install -y -q bzip2 ca-certificates curl unzip tcsh openmotif libXpm \
     && yum clean packages \
     && rm -rf /var/cache/yum/* /tmp/* /var/tmp/*
 
@@ -28,11 +25,6 @@ RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash - \
     && yum install -y nodejs gcc \
     && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
     && npm install -g bids-validator
-
-#Install other python packages
-RUN pip install med2image
-RUN pip install --no-cache-dir -r /computation/requirements.txt
-RUN pip install pillow tornado==5.0.2
 
 
 #----------------------
@@ -62,12 +54,28 @@ ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
     
 RUN chmod -R 777 /opt/spm12
 
+# Install afni
+WORKDIR /opt
+RUN curl -O https://afni.nimh.nih.gov/pub/dist/bin/linux_ubuntu_16_64/@update.afni.binaries \
+&& tcsh @update.afni.binaries -package linux_centos_7_64 -do_extras \
+&& rm -rf @update.afni.binaries
+ENV PATH=/root/abin:$PATH
 
+
+COPY requirements.txt /computation
+
+#Install other python packages
+RUN pip install med2image
+RUN pip install --no-cache-dir -r /computation/requirements.txt
+RUN pip install pillow tornado==5.0.2
 
 #Remove user warnings
 RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.5/site-packages/dicom/__init__.py
 RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.5/site-packages/bids/grabbids/__init__.py 
 #RUN sed -i '6,$d' /opt/miniconda/envs/default/lib/python3.5/site-packages/sklearn/externals/joblib/__init__.py 
+
+WORKDIR /computation
+COPY . /computation
 
 RUN groupadd --gid 1000 node \
   && useradd --uid 1000 --gid node --shell /bin/bash --create-home node

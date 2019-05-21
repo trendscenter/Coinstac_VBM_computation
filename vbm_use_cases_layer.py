@@ -4,7 +4,7 @@
 This layer runs the pre-processing VBM (Voxel Based Morphometry) pipeline based on the inputs from interface adapter layer
 This layer uses entities layer to modify nodes of the pipeline as needed
 """
-import contextlib
+import contextlib,traceback
 
 
 @contextlib.contextmanager
@@ -45,6 +45,9 @@ import nibabel as nib
 import nipype.pipeline.engine as pe
 import numpy as np
 from nilearn import plotting
+
+#Import afni interface to perform resampling
+from nipype.interfaces import afni
 
 import vbm_entities_layer
 
@@ -250,6 +253,39 @@ def get_corr(segmented_file, write_dir, sub_id, **template_dict):
             fp.close()
     return covalue
 
+def resample_nifti_images(image_file, voxel_dimensions, resample_method):
+    """Resample the NIfTI images in a folder and put them in a new folder
+    Args:
+        images_location: Path where the images are stored
+        voxel_dimension: tuple (dx, dy, dz)
+        resample_method: NN - Nearest neighbor
+                         Li - Linear interpolation
+    Returns:
+        None:
+    """
+    try:
+        voxel_size_str = '_{:.0f}mm'.format(float(voxel_dimensions[0]))
+        (file_name, file_ext) = os.path.splitext(image_file)
+        new_file_name = ''.join([file_name, voxel_size_str, file_ext])
+
+        resample = afni.Resample()
+        resample.inputs.environ = {'AFNI_NIFTI_TYPE_WARN': 'NO'}
+        resample.inputs.in_file = image_file
+        resample.inputs.out_file = os.path.join(os.path.dirname(image_file), new_file_name)
+        resample.inputs.voxel_size = voxel_dimensions
+        resample.inputs.outputtype = 'NIFTI'
+        resample.inputs.resample_mode = resample_method
+        resample.run()
+
+        #Delete the image_file as we only use the resampled image
+        if os.path.exists(image_file):os.remove(image_file)
+
+    except Exception as e:
+        sys.stderr.write('Unable to resample regression input file Error_log:' + str(e)+str(traceback.format_exc()))
+
+    return os.path.join(os.path.dirname(image_file), new_file_name)
+
+
 
 def create_pipeline_nodes(**template_dict):
     """This function creates and modifies nodes of the pipeline from entities layer with nipype
@@ -454,9 +490,19 @@ def run_pipeline(write_dir,
     id = 0  # id for assigning sub-id incase of nifti files in txt format
     loop_counter = 0  # loop counter
     count_success = 0  # variable for counting how many subjects were successfully run
+
+    # Create regression_input_files to store input files for performing regression
+    regression_input_dir=write_dir + '/' + template_dict[
+        'regression_dir_name']
+    os.makedirs(regression_input_dir,exist_ok=True)
+
+
     write_dir = write_dir + '/' + template_dict[
         'output_zip_dir']  # Store outputs in this directory for zipping the directory
     error_log = dict()  # dict for storing error log
+
+
+
 
     for each_sub in smri_data:
         loop_counter += 1
@@ -569,16 +615,20 @@ def run_pipeline(write_dir,
                     os.path.join(vbm_out, template_dict['vbm_output_dirname'],
                                  template_dict['display_image_name']),
                     os.path.dirname(write_dir))
-
-            if covalue <= 0.91:
-                unwanted_indexes.append(loop_counter)
-            template_dict['covariates'][0][0][loop_counter][0] = (glob.glob(
+                
+            if covalue>0.91:
+                # Copy regression input files to regression_input_dir
+                shutil.copy(os.path.join(glob.glob(
                     os.path.join(vbm_out, template_dict['vbm_output_dirname'],
-                                 template_dict['regression_file_input_type']+'*.nii'))[0]).replace(outputDirectory+'/','')
-            template_dict['regression_data'][0][loop_counter-1] = (glob.glob(
-                os.path.join(vbm_out, template_dict['vbm_output_dirname'],
-                             template_dict['regression_file_input_type'] + '*.nii'))[0]).replace(outputDirectory + '/',
-                                                                                                 '')
+                                 template_dict['regression_file_input_type']+'*.nii'))[0]),os.path.join(regression_input_dir,sub_id+session+'_'+template_dict['regression_file_input_type']+'.nii'))
+
+                # Resample regression file input images for performing regression (for demo purposes)
+                regression_resampled_file=resample_nifti_images(os.path.join(regression_input_dir,sub_id+session+'_'+template_dict['regression_file_input_type']+'.nii'), template_dict['regression_voxel_size'], template_dict['regression_resample_method'])
+            else:
+                unwanted_indexes.append(loop_counter)
+
+            template_dict['covariates'][0][0][loop_counter][0] = (regression_resampled_file).replace(outputDirectory+'/','')
+            template_dict['regression_data'][0][loop_counter-1] = (regression_resampled_file).replace(outputDirectory + '/','')
 
         finally:
             remove_tmp_files()
@@ -597,10 +647,9 @@ def run_pipeline(write_dir,
                 os.path.dirname(write_dir), template_dict['output_zip_dir']),
             'zip', write_dir)
 
-        #Remove vbm_outputs directory if needed
-        #shutil.rmtree(write_dir, ignore_errors=True)
 
         download_outputs_path = write_dir + '.zip'
+
 
         output_message = "VBM preprocessing completed. Download zipped output file here:" +download_outputs_path+" " +str(
             count_success) + "/" + str(
