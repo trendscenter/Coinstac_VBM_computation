@@ -62,7 +62,7 @@ RUN curl -O https://afni.nimh.nih.gov/pub/dist/bin/linux_ubuntu_16_64/@update.af
 ENV PATH=/root/abin:$PATH
 
 
-COPY requirements.txt /computation
+COPY requirements.txt /computation/
 
 #Install other python packages
 RUN pip install med2image
@@ -73,9 +73,6 @@ RUN pip install pillow tornado==5.0.2
 RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.5/site-packages/dicom/__init__.py
 RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.5/site-packages/bids/grabbids/__init__.py 
 #RUN sed -i '6,$d' /opt/miniconda/envs/default/lib/python3.5/site-packages/sklearn/externals/joblib/__init__.py 
-
-WORKDIR /computation
-COPY . /computation
 
 RUN groupadd --gid 1000 node \
   && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
@@ -120,8 +117,9 @@ RUN set -ex \
   && rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz
 
 
-
 ADD server/. /server
 WORKDIR /server
 RUN npm i --production
 CMD ["node", "/server/index.js"]
+
+COPY . /computation
