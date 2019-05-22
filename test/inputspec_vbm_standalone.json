@@ -1,1 +1,1 @@
-{"options":{"value":6}, "standalone":{"value":true}, "data":{"value":["sub1.nii","sub2.nii.gz"]}}
+{"options_smoothing":{"value":6}, "standalone":{"value":true}, "data":{"value":["sub1.nii","sub2.nii.gz"]}}
