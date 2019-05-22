@@ -88,7 +88,7 @@ template_dict = {
         (4.0, 4.0, 4.0),
     'regression_resample_method':
     'Li',
-    'FWHM_SMOOTH': [10, 10, 10],
+    'FWHM_SMOOTH': [10.0, 10.0, 10.0],
     'bounding_box':
     '',
     'options_reorient_params_x_mm': 0,
@@ -226,8 +226,18 @@ def convert_reorientparams_save_to_mat_script():
 def args_parser(args):
     """ This function extracts options from arguments
     """
-    if 'options_smoothing' in args['input']:
-        template_dict['FWHM_SMOOTH'] = [float(args['input']['options_smoothing'])] * 3
+    fwhm_smooth=list()
+    if 'options_smoothing_x_mm' in args['input']:
+        fwhm_smooth.append(float(args['input']['options_smoothing_x_mm']))
+
+    if 'options_smoothing_y_mm' in args['input']:
+        fwhm_smooth.append(float(args['input']['options_smoothing_y_mm']))
+
+    if 'options_smoothing_z_mm' in args['input']:
+        fwhm_smooth.append(float(args['input']['options_smoothing_z_mm']))
+
+    if len(fwhm_smooth) == 3:
+        template_dict['FWHM_SMOOTH'] = fwhm_smooth
 
     if args['input']['standalone']:
         template_dict['standalone'] = args['input']['standalone']
@@ -341,6 +351,7 @@ if __name__ == '__main__':
 
         # Parse args
         args_parser(args)
+
 
         #Convert reorient params to mat file if they exist
         convert_reorientparams_save_to_mat_script()
