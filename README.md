@@ -85,3 +85,6 @@ local0/simulatorRun/vbm_outputs:
 outputs_description.txt		quality_control_readme.txt	subID-1				subID-2				vbm_log.txt
 
 For standalone vbm options, use test/inputspec_vbm_standalone_reorient_options.json as inputspec.json
+
+The optional params info is detailed in vbm optional params description.xlsx
+Type of info. available is : Name	Label	Description	Json data type	Algorithm dev type for inner processing	Default value	Range (if applicable)	Step increments	pre=processing step
