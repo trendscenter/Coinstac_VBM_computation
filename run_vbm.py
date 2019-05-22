@@ -226,8 +226,8 @@ def convert_reorientparams_save_to_mat_script():
 def args_parser(args):
     """ This function extracts options from arguments
     """
-    if 'options' in args['input']:
-        template_dict['FWHM_SMOOTH'] = [float(args['input']['options'])] * 3
+    if 'options_smoothing' in args['input']:
+        template_dict['FWHM_SMOOTH'] = [float(args['input']['options_smoothing'])] * 3
 
     if args['input']['standalone']:
         template_dict['standalone'] = args['input']['standalone']
