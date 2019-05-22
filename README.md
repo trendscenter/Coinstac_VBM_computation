@@ -67,6 +67,12 @@ subID-1_swc1_4mm.nii	subID-2_swc1_4mm.nii
 local0/simulatorRun/vbm_outputs:
 outputs_description.txt		quality_control_readme.txt	subID-1				subID-2				vbm_log.txt
 
+vbm+regression optional params : 
+options_smoothing,reorientation params, regression_resampling_voxel_size etc. regression_resampling_voxel_size can be varied 
+to check the performance of coinstac in terms of how much data flow it can handle. Default value for this is 4mm.
+For more info. check compspec.json
+Use inputspec_vbm_regression_reorient_options.json as inputspec.json
+
 
 For standalone vbm, use test/inputspec_vbm_standalone.json as inputspec.json
 
@@ -78,3 +84,4 @@ local0/simulatorRun/vbm_outputs.zip	local0/simulatorRun/wc1Re.png
 local0/simulatorRun/vbm_outputs:
 outputs_description.txt		quality_control_readme.txt	subID-1				subID-2				vbm_log.txt
 
+For standalone vbm options, use test/inputspec_vbm_standalone_reorient_options.json as inputspec.json

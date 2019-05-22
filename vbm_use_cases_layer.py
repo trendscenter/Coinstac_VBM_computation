@@ -623,7 +623,7 @@ def run_pipeline(write_dir,
                                  template_dict['regression_file_input_type']+'*.nii'))[0]),os.path.join(regression_input_dir,sub_id+session+'_'+template_dict['regression_file_input_type']+'.nii'))
 
                 # Resample regression file input images for performing regression (for demo purposes)
-                regression_resampled_file=resample_nifti_images(os.path.join(regression_input_dir,sub_id+session+'_'+template_dict['regression_file_input_type']+'.nii'), template_dict['regression_voxel_size'], template_dict['regression_resample_method'])
+                regression_resampled_file=resample_nifti_images(os.path.join(regression_input_dir,sub_id+session+'_'+template_dict['regression_file_input_type']+'.nii'), template_dict['regression_resample_voxel_size'], template_dict['regression_resample_method'])
             else:
                 unwanted_indexes.append(loop_counter)
 

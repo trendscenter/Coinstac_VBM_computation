@@ -13,13 +13,13 @@
   },
   "computation": {
     "type": "docker",
-    "dockerImage": "spanta28/coinstac_vbm_docker",
+    "dockerImage": "last",
     "command": [
       "python",
       "/computation/run_vbm.py"
     ],
     "input": {
-      "options": {
+      "options_smoothing": {
         "type": "number",
         "label": "Smoothing FWHM in mm",
         "defaultValue": 10,
@@ -37,27 +37,64 @@
       },
       "options_reorient_params_x_mm": {
         "type": "number",
-        "label": "x in mm",
+        "label": "x translation in mm",
         "defaultValue": 0,
-        "min": 0,
+        "min": -50,
         "max": 50,
-        "description": "reorient the image along x axis in mm"
+        "description": "x translation in mm"
       },
         "options_reorient_params_y_mm": {
         "type": "number",
-        "label": "y in mm",
+        "label": "y translation in mm",
         "defaultValue": 0,
-        "min": 0,
+        "min": -50,
         "max": 50,
-        "description": "reorient the image along y axis in mm"
+        "description": "y translation in mm"
       },
         "options_reorient_params_z_mm": {
         "type": "number",
-        "label": "z in mm",
+        "label": "z translation in mm",
         "defaultValue": 0,
-        "min": 0,
+        "min": -50,
         "max": 50,
-        "description": "reorient the image along z axis in mm"
+        "description": "z translation in mm"
+      },
+	      "options_reorient_params_pitch": {
+        "type": "number",
+        "label": "x rotation about pitch in degrees[-360,360]",
+        "defaultValue": 0,
+        "min": -360,
+        "max": 360,
+        "description": "x rotation about - {pitch} (degrees). Ex: 90"
+      },
+        "options_reorient_params_roll": {
+        "type": "number",
+        "label": "y rotation about roll in degrees[-360,360]",
+        "defaultValue": 0,
+        "min": -360,
+        "max": 360,
+        "description": "y rotation about - {roll}  (degrees). Ex: 180"
+      },
+        "options_reorient_params_yaw": {
+        "type": "number",
+        "label": "z rotation about yaw in degrees[-360,360]",
+        "defaultValue": 0,
+        "min": -360,
+        "max": 360,
+        "description": "z rotation about - {yaw}   (degrees). Ex: -45"
+      },
+     "regression_resample_voxel_size": {
+        "type": "number",
+        "label": "Smoothing FWHM in mm",
+        "defaultValue": 4,
+        "min": 1,
+        "max": 6,
+        "step": 1,
+        "description": "Full width half maximum smoothing kernel value in x,y,z directions",
+       "conditionalToggle": {
+          "variable": "variable-name",
+          "toggle": "boolean"
+        }
       },
       "regression_file_input_type": {
         "type": "string",
