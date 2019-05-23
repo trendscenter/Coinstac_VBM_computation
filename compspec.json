@@ -185,7 +185,7 @@ Determining the “best” setting involves a compromise between speed and accur
         "type": "boolean",
         "defaultValue": true,
         "label": "Implicit masking for smoothing",
-        "description": "An "implicit mask" is a mask implied by a particular voxel value (0 for images with integer type,
+        "description": "An implicit mask is a mask implied by a particular voxel value (0 for images with integer type,
 NaN for float images).
 If set to ’Yes’, the implicit masking of the input image is preserved in the smoothed image."
       },
