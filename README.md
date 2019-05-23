@@ -7,6 +7,9 @@ Test bids data is placed in /computation/test_dir/bids_input_data
 
 At the end of the computation , the output is written to stdout in json with the property "success" set to true/false indicating whether the algorithm ran successfully or failed
 
+Dockerfile_build_from_scratch builds everything from scratch, downloads packages from online
+Dockerfile sources from trendscenter/coinstac_nipype_spm_mcr_afni_centos7 and just uploads the current scripts into the docker.
+
 For vbm+regression, use test/inputspec_vbm_regression.json as inputspec.json
 
 if you use sample data in test directory, example output below:
