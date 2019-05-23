@@ -244,8 +244,8 @@ def get_corr(segmented_file, write_dir, sub_id, **template_dict):
         fp.write("%3.2f\n" % (covalue))
         fp.close()
 
-    #Flag subjects with <0.91 correlation value
-    if covalue <= 0.91:
+    #Flag subjects with <0.90 correlation value
+    if covalue < template_dict['correlation_value']:
         with open(
                 os.path.join(write_dir, template_dict['qa_flagged_filename']),
                 'w') as fp:
@@ -610,22 +610,28 @@ def run_pipeline(write_dir,
             # If the try block succeeds, increase the  success count and save the wc1*nii as wc1.png
             count_success = count_success + 1
 
-            if count_success == 1 and covalue>0.91:
+            # Create a image of the first successfully created wc1*.nii for coinstac display to local user
+            if count_success == 1:
                 shutil.copy(
                     os.path.join(vbm_out, template_dict['vbm_output_dirname'],
                                  template_dict['display_image_name']),
                     os.path.dirname(write_dir))
-                
-            if covalue>0.91:
-                # Copy regression input files to regression_input_dir
-                shutil.copy(os.path.join(glob.glob(
-                    os.path.join(vbm_out, template_dict['vbm_output_dirname'],
-                                 template_dict['regression_file_input_type']+'*.nii'))[0]),os.path.join(regression_input_dir,sub_id+session+'_'+template_dict['regression_file_input_type']+'.nii'))
 
-                # Resample regression file input images for performing regression (for demo purposes)
-                regression_resampled_file=resample_nifti_images(os.path.join(regression_input_dir,sub_id+session+'_'+template_dict['regression_file_input_type']+'.nii'), template_dict['regression_resample_voxel_size'], template_dict['regression_resample_method'])
-            else:
-                unwanted_indexes.append(loop_counter)
+            # Copy regression input files to regression_input_dir
+            shutil.copy(os.path.join(glob.glob(
+                os.path.join(vbm_out, template_dict['vbm_output_dirname'],
+                             template_dict['regression_file_input_type'] + '*.nii'))[0]),
+                        os.path.join(regression_input_dir,
+                                     sub_id + session + '_' + template_dict['regression_file_input_type'] + '.nii'))
+
+            # Resample regression file input images for performing regression (for demo purposes)
+            regression_resampled_file = resample_nifti_images(os.path.join(regression_input_dir,
+                                                                           sub_id + session + '_' + template_dict[
+                                                                               'regression_file_input_type'] + '.nii'),
+                                                              template_dict['regression_resample_voxel_size'],
+                                                              template_dict['regression_resample_method'])
+
+            if covalue < template_dict['correlation_value']: unwanted_indexes.append(loop_counter)
 
             template_dict['covariates'][0][0][loop_counter][0] = (regression_resampled_file).replace(outputDirectory+'/','')
             template_dict['regression_data'][0][loop_counter-1] = (regression_resampled_file).replace(outputDirectory + '/','')

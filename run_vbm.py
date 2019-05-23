@@ -107,6 +107,13 @@ template_dict = {
     0.0001,
     'FWHM_GAUSSIAN_SMOOTH_BIAS':
     60,
+    'affine_regularization': 'mni',
+    'warping_regularization': [0, 1e-3, 0.5, 0.05, 0.2],
+    'sampling_distance': 3.0,
+    'implicit_masking':
+    False,
+    'correlation_value':
+    0.90,
     'vbm_output_dirname':
     'vbm_spm12',
     'output_zip_dir':
@@ -226,18 +233,12 @@ def convert_reorientparams_save_to_mat_script():
 def args_parser(args):
     """ This function extracts options from arguments
     """
-    fwhm_smooth=list()
     if 'options_smoothing_x_mm' in args['input']:
-        fwhm_smooth.append(float(args['input']['options_smoothing_x_mm']))
-
+         template_dict['FWHM_SMOOTH'][0]= float(args['input']['options_smoothing_x_mm'])
     if 'options_smoothing_y_mm' in args['input']:
-        fwhm_smooth.append(float(args['input']['options_smoothing_y_mm']))
-
+         template_dict['FWHM_SMOOTH'][1]= float(args['input']['options_smoothing_y_mm'])
     if 'options_smoothing_z_mm' in args['input']:
-        fwhm_smooth.append(float(args['input']['options_smoothing_z_mm']))
-
-    if len(fwhm_smooth) == 3:
-        template_dict['FWHM_SMOOTH'] = fwhm_smooth
+        template_dict['FWHM_SMOOTH'][2] = float(args['input']['options_smoothing_z_mm'])
 
     if args['input']['standalone']:
         template_dict['standalone'] = args['input']['standalone']
@@ -270,6 +271,25 @@ def args_parser(args):
         template_dict['options_reorient_params_y_affine'] = float(args['input']['options_reorient_params_y_affine'])
     if 'options_reorient_params_z_affine' in args['input']:
         template_dict['options_reorient_params_z_affine'] = float(args['input']['options_reorient_params_z_affine'])
+
+    if 'options_BIAS_REGULARISATION' in args['input']:
+        template_dict['BIAS_REGULARISATION']=float(args['input']['options_BIAS_REGULARISATION'])
+
+    if 'options_FWHM_GAUSSIAN_SMOOTH_BIAS' in args['input']:
+        template_dict['FWHM_GAUSSIAN_SMOOTH_BIAS']=args['input']['options_FWHM_GAUSSIAN_SMOOTH_BIAS']
+
+    if 'options_affine_regularization' in args['input']:
+        template_dict['affine_regularization']=args['input']['options_affine_regularization']
+
+    if 'options_warping_regularization' in args['input']:
+        if len(args['input']['options_warping_regularization'])==5:
+            template_dict['warping_regularization']=args['input']['options_warping_regularization']
+
+    if 'options_sampling_distance' in args['input']:
+        template_dict['sampling_distance']=float(args['input']['options_sampling_distance'])
+
+    if 'options_smoothing_implicit_masking' in args['input']:
+        template_dict['implicit_masking']=args['input']['options_smoothing_implicit_masking']
 
     if 'regression_resample_voxel_size' in args['input']:
         template_dict['regression_resample_voxel_size']=tuple([float(args['input']['regression_resample_voxel_size'])]*3)

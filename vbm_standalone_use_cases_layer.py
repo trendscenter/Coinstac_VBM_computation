@@ -235,8 +235,8 @@ def get_corr(segmented_file, write_dir, sub_id, **template_dict):
         fp.write("%3.2f\n" % (covalue))
         fp.close()
 
-    #Flag subjects with <0.91 correlation value
-    if covalue <= 0.91:
+    #Flag subjects with <0.90 correlation value
+    if covalue < template_dict['correlation_value']:
         with open(
                 os.path.join(write_dir, template_dict['qa_flagged_filename']),
                 'w') as fp:
