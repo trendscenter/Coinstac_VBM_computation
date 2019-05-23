@@ -245,7 +245,7 @@ def get_corr(segmented_file, write_dir, sub_id, **template_dict):
         fp.close()
 
     #Flag subjects with <0.90 correlation value
-    if covalue < template_dict['correlation_value']:
+    if round(covalue,2) < template_dict['correlation_value']:
         with open(
                 os.path.join(write_dir, template_dict['qa_flagged_filename']),
                 'w') as fp:
@@ -631,7 +631,7 @@ def run_pipeline(write_dir,
                                                               template_dict['regression_resample_voxel_size'],
                                                               template_dict['regression_resample_method'])
 
-            if covalue < template_dict['correlation_value']: unwanted_indexes.append(loop_counter)
+            if round(covalue,2) < template_dict['correlation_value']: unwanted_indexes.append(loop_counter)
 
             template_dict['covariates'][0][0][loop_counter][0] = (regression_resampled_file).replace(outputDirectory+'/','')
             template_dict['regression_data'][0][loop_counter-1] = (regression_resampled_file).replace(outputDirectory + '/','')
