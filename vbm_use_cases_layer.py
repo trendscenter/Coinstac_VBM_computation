@@ -624,14 +624,17 @@ def run_pipeline(write_dir,
                         os.path.join(regression_input_dir,
                                      sub_id + session + '_' + template_dict['regression_file_input_type'] + '.nii'))
 
-            # Resample regression file input images for performing regression (for demo purposes)
-            regression_resampled_file = resample_nifti_images(os.path.join(regression_input_dir,
-                                                                           sub_id + session + '_' + template_dict[
-                                                                               'regression_file_input_type'] + '.nii'),
-                                                              template_dict['regression_resample_voxel_size'],
-                                                              template_dict['regression_resample_method'])
+            if template_dict['regression_resample_voxel_size'] is not None:
+                # Resample regression file input images for performing regression (for demo purposes)
+                regression_resampled_file = resample_nifti_images(os.path.join(regression_input_dir,
+                                                                               sub_id + session + '_' + template_dict[
+                                                                                   'regression_file_input_type'] + '.nii'),
+                                                                  template_dict['regression_resample_voxel_size'],
+                                                                  template_dict['regression_resample_method'])
 
             if round(covalue,2) < template_dict['correlation_value']: unwanted_indexes.append(loop_counter)
+
+            regression_resampled_file=glob.glob(os.path.join(regression_input_dir,sub_id + session + '_' + template_dict['regression_file_input_type'] + '.nii'))[0]
 
             template_dict['covariates'][0][0][loop_counter][0] = (regression_resampled_file).replace(outputDirectory+'/','')
             template_dict['regression_data'][0][loop_counter-1] = (regression_resampled_file).replace(outputDirectory + '/','')

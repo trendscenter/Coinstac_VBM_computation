@@ -85,7 +85,7 @@ template_dict = {
     'regression_file':
         'swc1Re.nii',
     'regression_resample_voxel_size':
-        (4.0, 4.0, 4.0),
+        None,
     'regression_resample_method':
     'Li',
     'FWHM_SMOOTH': [10.0, 10.0, 10.0],
