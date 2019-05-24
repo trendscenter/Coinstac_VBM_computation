@@ -74,7 +74,7 @@ vbm+regression optional params :
 options_smoothing,reorientation params, regression_resampling_voxel_size etc. regression_resampling_voxel_size can be varied 
 to check the performance of coinstac in terms of how much data flow it can handle. Default value for this is 4mm.
 For more info. check compspec.json
-Use inputspec_vbm_regression_reorient_options.json as inputspec.json
+Use inputspec_vbm_regression_all_options.json as inputspec.json
 
 
 For standalone vbm, use test/inputspec_vbm_standalone.json as inputspec.json
@@ -87,7 +87,7 @@ local0/simulatorRun/vbm_outputs.zip	local0/simulatorRun/wc1Re.png
 local0/simulatorRun/vbm_outputs:
 outputs_description.txt		quality_control_readme.txt	subID-1				subID-2				vbm_log.txt
 
-For standalone vbm options, use test/inputspec_vbm_standalone_reorient_options.json as inputspec.json
+For standalone vbm options, use test/inputspec_vbm_standalone_all_options.json as inputspec.json
 
 The optional params info is detailed in vbm optional params description.xlsx
 Type of info. available is : Name	Label	Description	Json data type	Algorithm dev type for inner processing	Default value	Range (if applicable)	Step increments	pre=processing step
