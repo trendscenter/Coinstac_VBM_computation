@@ -43,6 +43,7 @@ class Segment:
         self.node.inputs.affine_regularization=template_dict['affine_regularization']
         self.node.inputs.warping_regularization=template_dict['warping_regularization']
         self.node.inputs.sampling_distance=template_dict['sampling_distance']
+        self.node.inputs.mrf_weighting=template_dict['mrf_weighting']
         self.node.inputs.cleanup=template_dict['cleanup']
 
 
