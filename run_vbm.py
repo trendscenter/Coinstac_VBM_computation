@@ -355,8 +355,6 @@ def data_parser(args):
             }))
 
 
-
-
 if __name__ == '__main__':
 
     try:

@@ -465,6 +465,8 @@ def smooth_images(write_dir,**template_dict):
     from nipype.interfaces import spm
     from nipype.interfaces.io import DataSink
     smooth = pe.Node(interface=spm.Smooth(), name='smooth')
+    smooth.inputs.paths = template_dict['spm_path']
+    smooth.inputs.implicit_masking = template_dict['implicit_masking']
     smooth.inputs.in_files = glob.glob(os.path.join(write_dir, 'mwc*.nii'))
     smooth.inputs.fwhm = template_dict['FWHM_SMOOTH']
     vbm_smooth_modulated_images = pe.Workflow(
