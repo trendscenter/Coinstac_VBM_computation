@@ -110,6 +110,10 @@ template_dict = {
     'affine_regularization': 'mni',
     'warping_regularization': [0, 1e-3, 0.5, 0.05, 0.2],
     'sampling_distance': 3.0,
+    'mrf_weighting':
+        1.0,
+    'cleanup':
+        1,
     'implicit_masking':
     False,
     'correlation_value':
@@ -239,6 +243,8 @@ def args_parser(args):
          template_dict['FWHM_SMOOTH'][1]= float(args['input']['options_smoothing_y_mm'])
     if 'options_smoothing_z_mm' in args['input']:
         template_dict['FWHM_SMOOTH'][2] = float(args['input']['options_smoothing_z_mm'])
+    if 'options_smoothing_implicit_masking' in args['input']:
+        template_dict['implicit_masking']=args['input']['options_smoothing_implicit_masking']
 
     if args['input']['standalone']:
         template_dict['standalone'] = args['input']['standalone']
@@ -288,8 +294,11 @@ def args_parser(args):
     if 'options_sampling_distance' in args['input']:
         template_dict['sampling_distance']=float(args['input']['options_sampling_distance'])
 
-    if 'options_smoothing_implicit_masking' in args['input']:
-        template_dict['implicit_masking']=args['input']['options_smoothing_implicit_masking']
+    if 'options_mrf_weighting' in args['input']:
+        template_dict['mrf_weighting']=float(args['input']['options_mrf_weighting'])
+
+    if 'options_cleanup' in args['input']:
+        template_dict['cleanup']=int(args['input']['options_cleanup'])
 
     if 'regression_resample_voxel_size' in args['input']:
         template_dict['regression_resample_voxel_size']=tuple([float(args['input']['regression_resample_voxel_size'])]*3)
