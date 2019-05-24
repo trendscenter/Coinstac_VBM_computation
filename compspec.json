@@ -145,6 +145,21 @@
         "max": 10,
         "description": "This encodes the approximate distance between sampled points when estimating the model parameters. Smaller values use more of the data, but the procedure is slower and needs more memory. Determining the “best” setting involves a compromise between speed and accuracy"
       },
+      "options_mrf_weighting": {
+        "type": "number",
+        "label": "markov random field weighting",
+        "defaultValue": 1.0,
+        "description": "When tissue class images are written out, a few iterations of a simple Markov Random Field (MRF) cleanup procedure are run. This parameter controls the strength of the MRF. Setting the value to zero will disable the cleanup."
+      },
+      "options_cleanup": {
+        "type": "number",
+        "label": "markov random field weighting",
+        "defaultValue": 3,
+        "min": 0,
+        "max": 2,
+        "step": 1,
+        "description": "This uses a crude routine for extracting the brain from segmented images. It begins by taking the white matter, and eroding it a couple of times to get rid of any odd voxels. The algorithm continues on to do conditional dilations for several iterations, where the condition is based upon gray or white matter being present.This identified region is then used to clean up the grey and white matter partitions. Note that the fluid class will also be cleaned, such that aqueous and vitreous humour in the eyeballs, as well as other assorted fluid regions (except CSF) will be removed. If you find pieces of brain being chopped out in your data, then you may wish to disable or tone down the cleanup procedure. Note that the procedure uses a number of assumptions about what each tissue class refers to. If a different set of tissue priors are used, then this routine should be disabled.0=None,1=light,2=thorough"
+},
       "options_smoothing_implicit_masking": {
         "type": "boolean",
         "defaultValue": true,
