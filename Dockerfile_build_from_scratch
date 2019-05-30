@@ -64,15 +64,36 @@ ENV PATH=/root/abin:$PATH
 
 COPY requirements.txt /computation/
 
+
 #Install other python packages
-RUN pip install med2image
 RUN pip install --no-cache-dir -r /computation/requirements.txt
-RUN pip install pillow tornado==5.0.2
 
 #Remove user warnings
 RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.5/site-packages/dicom/__init__.py
 RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.5/site-packages/bids/grabbids/__init__.py 
-#RUN sed -i '6,$d' /opt/miniconda/envs/default/lib/python3.5/site-packages/sklearn/externals/joblib/__init__.py 
+
+#Install dcm2niix
+ENV PATH="/opt/dcm2niix-latest/bin:$PATH"
+RUN yum install -y -q \
+           cmake \
+           gcc-c++ \
+           git \
+           libstdc++-static \
+           make \
+           pigz \
+           zlib-devel \
+    && yum clean packages \
+    && rm -rf /var/cache/yum/* /tmp/* /var/tmp/* \
+    && git clone https://github.com/rordenlab/dcm2niix /tmp/dcm2niix \
+    && mkdir /tmp/dcm2niix/build \
+    && cd /tmp/dcm2niix/build \
+    && cmake  -DCMAKE_INSTALL_PREFIX:PATH=/opt/dcm2niix-latest .. \
+    && make \
+    && make install \
+    && rm -rf /tmp/dcm2niix
+
+COPY preprocess.py /opt/miniconda/envs/default/lib/python3.5/site-packages/nipype/interfaces/spm/ 
+COPY . /computation
 
 RUN groupadd --gid 1000 node \
   && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
@@ -121,6 +142,3 @@ ADD server/. /server
 WORKDIR /server
 RUN npm i --production
 CMD ["node", "/server/index.js"]
-
-COPY preprocess.py /opt/miniconda/envs/default/lib/python3.5/site-packages/nipype/interfaces/spm/ 
-COPY . /computation
