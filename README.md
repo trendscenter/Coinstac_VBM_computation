@@ -1,3 +1,6 @@
+The foll. should work for testing instead of building docker from scratch
+docker pull spanta28/coinstac_vbm_docker 
+
 # Coinstac_VBM_computation
 This computation runs Voxel Based Morphometry on structural T1 weighted MRI scans(BIDS format) using SPMv12 standalone and MATLAB Runtimev713. 
 
