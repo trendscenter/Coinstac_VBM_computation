@@ -383,7 +383,7 @@ if __name__ == '__main__':
         #Convert reorient params to mat file if they exist
         convert_reorientparams_save_to_mat_script()
 
-        # Parse input data
+        # Parse input data and run the code
         data_parser(args)
     except Exception as e:
         sys.stderr.write('Unable to read input data or parse inputspec.json Error_log:'+str(e)+str(traceback.format_exc()))

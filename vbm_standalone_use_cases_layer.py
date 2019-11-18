@@ -586,12 +586,12 @@ def run_pipeline(write_dir,
         output_message = "VBM preprocessing completed. " + str(
             count_success) + "/" + str(
                 len(smri_data)
-            ) + " subjects" + " completed successfully." + template_dict[
+            ) + " subjects completed successfully." + template_dict[
                 'coinstac_display_info']
 
         preprocessed_percentage = (count_success / len(smri_data)) * 100
 
-        # If preprocessed_percentage<=50 output qa warning
+        # If preprocessed_percentage<=template_dict['qc_threshold'] output qa warning
         if os.path.isfile(
                 os.path.join(write_dir, template_dict['qa_flagged_filename'])):
             qa_percentage = (len(
@@ -599,10 +599,10 @@ def run_pipeline(write_dir,
                     os.path.join(write_dir,
                                  template_dict['qa_flagged_filename'])).
                 readlines()) / len(smri_data)) * 100
-            if (qa_percentage <= 50) or (preprocessed_percentage <= 50):
+            if (qa_percentage <= template_dict['qc_threshold']) or (preprocessed_percentage <= template_dict['qc_threshold']):
                 output_message = output_message + template_dict['flag_warning']
         else:
-            if (preprocessed_percentage <= 50):
+            if (preprocessed_percentage <= template_dict['qc_threshold']):
                 output_message = output_message + template_dict['flag_warning']
 
         if bool(error_log):

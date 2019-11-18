@@ -665,7 +665,7 @@ def run_pipeline(write_dir,
         output_message = "VBM preprocessing completed. Download zipped output file here:" +download_outputs_path+" " +str(
             count_success) + "/" + str(
                 len(smri_data)
-            ) + " subjects" + " completed successfully." + template_dict[
+            ) + " subjects completed successfully." + template_dict[
                 'coinstac_display_info']
 
         preprocessed_percentage = (count_success / len(smri_data)) * 100
