@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "clarify": "^2.1.0",
-    "socket.io": "^2.1.1",
+    "socket.io": "^2.4.0",
     "socket.io-stream": "^0.9.1",
     "trace": "^3.1.0",
     "winston": "^3.0.0"
