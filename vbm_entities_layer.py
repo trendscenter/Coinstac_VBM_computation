@@ -40,6 +40,11 @@ class Segment:
         self.node.inputs.channel_info = (
             template_dict['BIAS_REGULARISATION'],
             template_dict['FWHM_GAUSSIAN_SMOOTH_BIAS'], (False, False))
+        self.node.inputs.affine_regularization=template_dict['affine_regularization']
+        self.node.inputs.warping_regularization=template_dict['warping_regularization']
+        self.node.inputs.sampling_distance=template_dict['sampling_distance']
+        self.node.inputs.mrf_weighting=template_dict['mrf_weighting']
+        self.node.inputs.cleanup=template_dict['cleanup']
 
 
 def transform_list(normalized_class_images):
@@ -67,6 +72,7 @@ class Smooth:
         self.node = pe.Node(interface=spm.Smooth(), name='smoothing')
         self.node.inputs.paths = template_dict['spm_path']
         self.node.inputs.fwhm = template_dict['FWHM_SMOOTH']
+        self.node.inputs.implicit_masking=template_dict['implicit_masking']
 
 
 ## Datsink Node that collects segmented, smoothed files and writes to temp_write_dir ##

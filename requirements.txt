@@ -1,3 +1,4 @@
+med2image
 ujson==1.35
 nibabel==2.3.1
 pybids==0.6.5
@@ -8,8 +9,11 @@ duecredit==0.6.4
 patsy==0.5.1
 pydicom==1.2.0
 nilearn==0.4.2
-sklearn
+sklearn==0.0
 cython==0.29
 scipy==1.1.0
 future==0.17.1
 coverage==4.5.1
+scikit-learn==0.20.0
+pillow 
+tornado==5.0.2
