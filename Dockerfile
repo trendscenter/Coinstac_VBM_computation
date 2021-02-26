@@ -1,3 +1,4 @@
+FROM coinstacteam/coinstac-base
 FROM centos:7
 
 WORKDIR /computation
@@ -20,11 +21,11 @@ RUN curl -ssL -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-lat
     && rm -f miniconda.sh \
     && /opt/miniconda/bin/conda update -n base conda \
     && /opt/miniconda/bin/conda config --add channels conda-forge \
-    && /opt/miniconda/bin/conda create -y -q -n default python=3.5.1 \
+    && /opt/miniconda/bin/conda create -y -q -n default python=3.7 \
     && rm -rf /opt/miniconda/[!envs]*
 
 # Install Bids Validator using npm
-RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash - \
+RUN curl -sL https://rpm.nodesource.com/setup_15.x | bash - \
     && yum install -y nodejs gcc \
     && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
     && npm install -g bids-validator
@@ -59,14 +60,14 @@ ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
     SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \
     FORCE_SPMMCR=1 \
     LD_LIBRARY_PATH=/opt/mcr/v*/runtime/glnxa64:/opt/mcr/v*/bin/glnxa64:/opt/mcr/v*/sys/os/glnxa64:$LD_LIBRARY_PATH
-    
+
 RUN chmod -R 777 /opt/spm12
 
 
 
 #Remove user warning from dicom init file
-RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.5/site-packages/dicom/__init__.py
-RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.5/site-packages/bids/grabbids/__init__.py
+#RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.7/site-packages/dicom/__init__.py
+#RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.7/site-packages/bids/grabbids/__init__.py
 
 
 RUN groupadd --gid 1000 node \
