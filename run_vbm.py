@@ -350,18 +350,10 @@ def data_parser(args):
                 **template_dict)
             sys.stdout.write(computation_output)
     else:
-        sys.stdout.write(
-            json.dumps({
-                "output": {
-                    "message":
-                        "Input data given: " + str(data) + " Read permissions for input data: " + str(
-                            os.access(data[0], os.R_OK)) + " Write dir: " + str(
-                            WriteDir) + " Write permissions for WriteDir: " + str(
-                            os.access(WriteDir, os.W_OK)) + " Input data not found/Can not write to target directory"
-                },
-                "cache": {},
-                "success": True
-            }))
+        raise Exception( "Input data given: " + str(data) + " Read permissions for input data: " + str(
+            os.access(data[0], os.R_OK)) + " Write dir: " + str(
+            WriteDir) + " Write permissions for WriteDir: " + str(
+            os.access(WriteDir, os.W_OK)) + " Input data not found/Can not write to target directory")
 
 
 if __name__ == '__main__':
