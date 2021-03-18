@@ -47,11 +47,12 @@ ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
 
 RUN chmod -R 777 /opt/spm12
 
-
-
 #Remove user warning from dicom init file
 #RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.7/site-packages/dicom/__init__.py
 #RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.7/site-packages/bids/grabbids/__init__.py
 
 ADD . /computation
 RUN pip install --no-cache-dir -r /computation/requirements.txt
+
+# allow all inputs on vbm interface
+COPY preprocess.py /opt/miniconda/envs/default/lib/python3.7/site-packages/nipype/interfaces/spm/
