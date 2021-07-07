@@ -250,7 +250,7 @@ def args_parser(args):
         template_dict['standalone'] = args['input']['standalone']
     else:
         template_dict['covariates'] = args['input']['covariates']
-        template_dict['regression_data'] = args['input']['data']
+        template_dict['regression_data'] = args['input']['site_data']
         template_dict['regression_file_input_type'] = args['input']['regression_file_input_type']
 
     if 'options_reorient_params_x_mm' in args['input']:
@@ -324,31 +324,42 @@ def data_parser(args):
     """ This function parses the type of data i.e BIDS, nifti files or Dicoms
     and passes them to vbm_use_cases_layer.py
     """
-
-    if template_dict['standalone']:
-        data = [args['state']['baseDirectory'] + '/' + file_names for file_names in args['input']['data']]
-    else:
-        data = [args['state']['baseDirectory'] + '/' + subject[0] for subject in args['input']['covariates'][0][0][1:]]
+    # if template_dict['standalone']:
+    #     data = [args['state']['baseDirectory'] + '/' + file_names for file_names in args['input']['site_data']]
+    # else:
+    #     data = [args['state']['baseDirectory'] + '/' + subject[0] for subject in args['input']['covariates'][0][0][1:]]
+    # We are only concerned with pre-processing
+    data = [args['state']['baseDirectory'] + '/' + file_names for file_names in args['input']['covariates']]
 
     WriteDir = args['state']['outputDirectory']
 
     # Check if data has nifti files
     if [x for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
         nifti_paths = data
-        if template_dict['standalone']:
-            computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
-                data=nifti_paths,
-                write_dir=WriteDir,
-                data_type='nifti',
-                **template_dict)
-            sys.stdout.write(computation_output)
-        else:
-            computation_output = vbm_use_cases_layer.setup_pipeline(
-                data=nifti_paths,
-                write_dir=WriteDir,
-                data_type='nifti',
-                **template_dict)
-            sys.stdout.write(computation_output)
+        # if template_dict['standalone']:
+        #     computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
+        #         data=nifti_paths,
+        #         write_dir=WriteDir,
+        #         data_type='nifti',
+        #         **template_dict)
+        #     sys.stdout.write(computation_output)
+        # else:
+        #     computation_output = vbm_use_cases_layer.setup_pipeline(
+        #         data=nifti_paths,
+        #         write_dir=WriteDir,
+        #         data_type='nifti',
+        #         **template_dict)
+        #     sys.stdout.write(computation_output)
+        # We are only concerned with pre-processing
+        covariates = args['input']['covariates'];
+
+        computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
+            data=nifti_paths,
+            write_dir=WriteDir,
+            covars=covariates,
+            data_type='nifti',
+            **template_dict)
+        sys.stdout.write(computation_output)
     else:
         raise Exception( "Input data given: " + str(data) + " Read permissions for input data: " + str(
             os.access(data[0], os.R_OK)) + " Write dir: " + str(
@@ -370,7 +381,6 @@ if __name__ == '__main__':
 
         # Parse args
         args_parser(args)
-
 
         #Convert reorient params to mat file if they exist
         convert_reorientparams_save_to_mat_script()

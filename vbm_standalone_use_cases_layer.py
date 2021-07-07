@@ -5,6 +5,8 @@ This layer runs the pre-processing VBM (Voxel Based Morphometry) pipeline based 
 This layer uses entities layer to modify nodes of the pipeline as needed
 """
 import contextlib
+import re
+import vbm_spm12_file_output
 
 
 @contextlib.contextmanager
@@ -53,12 +55,13 @@ from nipype import logging
 logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
 
-def setup_pipeline(data='', write_dir='', data_type=None, **template_dict):
+def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_dict):
     """setup the pre-processing pipeline on T1W scans
         Args:
             data (array) : Input data
             write_dir (string): Directory to write outputs
             data_type (string): BIDS, niftis, dicoms
+            covariates (object): Input Covariates if they exist
             template_dict ( dictionary) : Dictionary that stores all the paths, file names, software locations
         Returns:
             computation_output (json): {"output": {
@@ -96,6 +99,7 @@ def setup_pipeline(data='', write_dir='', data_type=None, **template_dict):
                 reorient,
                 datasink,
                 vbm_preprocess,
+                covars,
                 data_type='bids',
                 **template_dict)
         elif data_type == 'nifti':
@@ -107,6 +111,7 @@ def setup_pipeline(data='', write_dir='', data_type=None, **template_dict):
                 reorient,
                 datasink,
                 vbm_preprocess,
+                covars,
                 data_type='nifti',
                 **template_dict)
         elif data_type == 'dicoms':
@@ -118,6 +123,7 @@ def setup_pipeline(data='', write_dir='', data_type=None, **template_dict):
                 reorient,
                 datasink,
                 vbm_preprocess,
+                covars,
                 data_type='dicoms',
                 **template_dict)
     except Exception as e:
@@ -441,6 +447,7 @@ def run_pipeline(write_dir,
                  reorient,
                  datasink,
                  vbm_preprocess,
+                 covars,
                  data_type=None,
                  **template_dict):
     """This function runs pipeline"""
@@ -455,11 +462,30 @@ def run_pipeline(write_dir,
     for each_sub in smri_data:
         loop_counter += 1
 
+        subj = each_sub
+
+        file_ext = re.search(r".[0-9a-z]+$", subj, re.DOTALL).group()
+
+        if file_ext == '.gz':
+            if "/" in subj or "\\" in subj:
+                #If subject file strings have forward or back slashes
+                sub_id = re.sub(r".*[\\\/]{1}([\w]*).{1}[a-z]*.{1}[a-z]*$", "\\1", subj, 0, re.M)
+            else:
+                #Otherwise
+                sub_id = re.sub(r"([\w]*).{1}[a-z]*.{1}[a-z]*", "\\1", subj, 0, re.M)
+
+        if file_ext == '.nii':
+            if "/" in subj or "\\" in subj:
+                #If subject file strings have forward or back slashes
+                sub_id = re.sub(r".*[\\\/]{1}([\w]*).{1}[a-z]*$", "\\1", subj, 0, re.M)
+            else:
+                #Otherwise
+                sub_id = re.sub(r"([\w]*).{1}[a-z]*", "\\1", subj, 0, re.M)
+
         try:
 
-            # Assign subject,session id and input nifiti file for reorienation node
+            # Assign subject,session id and input nifti file for reorienation node
             if data_type == 'bids':
-                sub_id = 'sub-' + each_sub.subject
                 session_id = getattr(each_sub, 'session', None)
                 if session_id is not None:
                     session = 'ses-' + getattr(each_sub, 'session', None)
@@ -470,15 +496,11 @@ def run_pipeline(write_dir,
                 n1_img = nib.load(each_sub.filename)
 
             if data_type == 'nifti':
-                id = id + 1
-                sub_id = 'subID-' + str(id)
                 session = ''
                 nii_output = ((each_sub).split('/')[-1]).split('.gz')[0]
                 n1_img = nib.load(each_sub)
 
             if data_type == 'dicoms':
-                id = id + 1
-                sub_id = 'subID-' + str(id)
                 session = ''
                 vbm_out = os.path.join(write_dir, sub_id, session, 'anat')
                 os.makedirs(vbm_out, exist_ok=True)
@@ -568,6 +590,8 @@ def run_pipeline(write_dir,
         finally:
             remove_tmp_files()
 
+    vbm_spm12_file_output.make_file_output(write_dir, template_dict, covars)
+
     if os.path.isfile(
             os.path.join(
                 os.path.dirname(write_dir),
@@ -614,11 +638,13 @@ def run_pipeline(write_dir,
                     os.path.dirname(write_dir),
                     template_dict['display_image_name']), "rb") as imageFile:
             encoded_image_str = base64.b64encode(imageFile.read())
+
         return json.dumps({
             "output": {
                 "message": output_message,
                 "download_outputs": download_outputs_path,
-                "display": encoded_image_str
+                "display": encoded_image_str,
+                "covariates": covars
             },
             "cache": {},
             "success": True

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "id": "preprocess-vbm",
+    "id": "vbm-pre",
     "name": "VBM (Voxel Based Morphometry) on T1W scans",
     "version": "v1.0",
     "repository": "github.com/MRN-Code/Coinstac_VBM_computation.git",
@@ -13,7 +13,7 @@
   },
   "computation": {
     "type": "docker",
-    "dockerImage": "vbm_pre",
+    "dockerImage": "vbm-pre",
     "command": [
       "python",
       "/computation/run_vbm.py"
@@ -24,13 +24,6 @@
         "type": "boolean",
         "default": true,
         "order": 0
-      },
-      "data": {
-        "label": "Data",
-        "type": "array",
-        "items": ["NIfTI"],
-        "extensions": [["txt"]],
-        "order": 1
       },
       "covariates": {
         "label": "Covariates",

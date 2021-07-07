@@ -1,0 +1,12 @@
+filename,isControl,age,sex,site
+A00063430.nii.gz,True,28,M,HGM
+A00063499.nii.gz,False,42,F,HGM
+A00063526.nii.gz,True,18,F,GMH
+A00063929.nii.gz,True,37,M,HGM
+A00064285.nii.gz,False,22,F,GMH
+A00064354.nii.gz,True,38,M,GMH
+A00064417.nii.gz,False,21,F,HGM
+A00065247.nii.gz,False,51,M,GMH
+A00065432.nii.gz,True,23,F,HGM
+A00065623.nii.gz,False,33,M,GMH
+A00065944.nii.gz,True,19,F,HGM

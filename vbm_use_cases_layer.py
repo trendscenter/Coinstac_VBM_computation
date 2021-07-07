@@ -715,4 +715,3 @@ def run_pipeline(write_dir,
             "cache": {},
             "success": True
         })
-
