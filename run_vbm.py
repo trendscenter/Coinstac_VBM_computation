@@ -250,8 +250,8 @@ def args_parser(args):
         template_dict['standalone'] = args['input']['standalone']
     else:
         template_dict['covariates'] = args['input']['covariates']
-        template_dict['regression_data'] = args['input']['site_data']
-        template_dict['regression_file_input_type'] = args['input']['regression_file_input_type']
+        template_dict['regression_data'] = args['input']['data']
+        #template_dict['regression_file_input_type'] = args['input']['regression_file_input_type']
 
     if 'options_reorient_params_x_mm' in args['input']:
         template_dict['options_reorient_params_x_mm'] = float(args['input']['options_reorient_params_x_mm'])
