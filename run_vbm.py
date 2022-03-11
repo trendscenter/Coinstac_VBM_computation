@@ -334,37 +334,36 @@ def data_parser(args):
     WriteDir = args['state']['outputDirectory']
 
     # Check if data has nifti files
-    if [x for x in data if os.path.isfile(x)] and os.access(WriteDir, os.W_OK):
-        nifti_paths = data
-        # if template_dict['standalone']:
-        #     computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
-        #         data=nifti_paths,
-        #         write_dir=WriteDir,
-        #         data_type='nifti',
-        #         **template_dict)
-        #     sys.stdout.write(computation_output)
-        # else:
-        #     computation_output = vbm_use_cases_layer.setup_pipeline(
-        #         data=nifti_paths,
-        #         write_dir=WriteDir,
-        #         data_type='nifti',
-        #         **template_dict)
-        #     sys.stdout.write(computation_output)
-        # We are only concerned with pre-processing
-        covariates = args['input']['covariates'];
+    for x in data:
+        if not os.path.isfile(x):
+            raise Exception("File does not exist or can't be read: " + str(x));
+    if not os.access(WriteDir, os.W_OK):
+        raise Exception("Output write permissions denied: " + str(WritDir));
+    nifti_paths = data
+    # if template_dict['standalone']:
+    #     computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
+    #         data=nifti_paths,
+    #         write_dir=WriteDir,
+    #         data_type='nifti',
+    #         **template_dict)
+    #     sys.stdout.write(computation_output)
+    # else:
+    #     computation_output = vbm_use_cases_layer.setup_pipeline(
+    #         data=nifti_paths,
+    #         write_dir=WriteDir,
+    #         data_type='nifti',
+    #         **template_dict)
+    #     sys.stdout.write(computation_output)
+    # We are only concerned with pre-processing
+    covariates = args['input']['covariates'];
 
-        computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
-            data=nifti_paths,
-            write_dir=WriteDir,
-            covars=covariates,
-            data_type='nifti',
-            **template_dict)
-        sys.stdout.write(computation_output)
-    else:
-        raise Exception( "Input data given: " + str(data) + " Read permissions for input data: " + str(
-            os.access(data[0], os.R_OK)) + " Write dir: " + str(
-            WriteDir) + " Write permissions for WriteDir: " + str(
-            os.access(WriteDir, os.W_OK)) + " Input data not found/Can not write to target directory")
+    computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
+        data=nifti_paths,
+        write_dir=WriteDir,
+        covars=covariates,
+        data_type='nifti',
+        **template_dict)
+    sys.stdout.write(computation_output)
 
 
 if __name__ == '__main__':

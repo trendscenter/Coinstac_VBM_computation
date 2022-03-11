@@ -11,17 +11,16 @@ def make_file_output(write_dir, template_dict, covariates):
 
     for type in spm12_types:
 
-        mode = 0o777
 
         basepath = os.path.join(os.path.dirname(write_dir),"vbm_outputs")
 
         covpath = os.path.join(basepath,'covariates')
         if os.path.isdir(covpath) == False:
-            os.mkdir(covpath, mode)
+            os.makedirs(covpath)
 
         path = os.path.join(basepath,'covariates',type)
         if os.path.isdir(path) == False:
-            os.mkdir(path, mode)
+            os.makedirs(path)
 
         fpath = os.path.join(path,"covariates-"+type+".txt")
         if os.path.isfile(fpath) == False:

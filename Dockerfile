@@ -51,8 +51,17 @@ RUN chmod -R 777 /opt/spm12
 #RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.7/site-packages/dicom/__init__.py
 #RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.7/site-packages/bids/grabbids/__init__.py
 
-ADD . /computation
-RUN pip install --no-cache-dir -r /computation/requirements.txt
+# Set the working directory
+WORKDIR /computation
+
+# Copy the current directory contents into the container
+COPY requirements.txt /computation
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the current directory contents into the container
+COPY . /computation
 
 # allow all inputs on vbm interface
 COPY preprocess.py /opt/miniconda/envs/default/lib/python3.7/site-packages/nipype/interfaces/spm/
