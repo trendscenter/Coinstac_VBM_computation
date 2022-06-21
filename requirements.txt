@@ -3,7 +3,7 @@ ujson==1.35
 nibabel==2.3.1
 pybids==0.6.5
 nipype==1.1.5
-numpy==1.15.1
+numpy==1.22.0
 pandas==0.23.4
 duecredit==0.6.4
 patsy==0.5.1
