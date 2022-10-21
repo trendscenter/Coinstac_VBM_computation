@@ -8,7 +8,7 @@ This was a 1 site run in COINSTAC UI with a pipeline set up to reflect the setti
 
 The results from COINSTAC UI can be viewed or downloaded here: [View files](https://mygsu-my.sharepoint.com/:f:/g/personal/jromero7_gsu_edu/ErLxseaPxA5HidQH47fEPqQBNv6wrILXpBrBKHp14dusbA?e=Y1Qi8S)
 
-Here is an animated gif of the generated results: 
+Here is a screenshot of the results: 
 
-![Results View](https://github.com/trendscenter/Coinstac_VBM_computation/test/results/results.gif "Results View")
+![Results View](https://raw.githubusercontent.com/trendscenter/Coinstac_VBM_computation/master/test/results/results.png "Results View")
 
