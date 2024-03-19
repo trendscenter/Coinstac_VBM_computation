@@ -64,9 +64,9 @@ logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
 template_dict = {
     'spm_version':
-    '12.7507',
+    '12.7771',
     'matlab_cmd':
-    '/opt/spm12/run_spm12.sh /opt/mcr/v95 script',
+    '/opt/spm12/run_spm12.sh /opt/mcr/v97 script',
     'spm_path':
     '/opt/spm12/fsroot',
     'tpm_path':
