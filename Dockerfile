@@ -17,12 +17,6 @@ RUN curl -ssL -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-lat
     && /opt/miniconda/bin/conda create -y -q -n default python=3.7 \
     && rm -rf /opt/miniconda/[!envs]*
 
-#RUN npm install -g bids-validator
-
-#Install other python packages
-RUN pip install med2image
-RUN pip install pillow tornado==5.0.2
-
 
 # Install MATLAB MCR in /opt/mcr/
 ENV MATLAB_VERSION R2019b
@@ -49,14 +43,10 @@ RUN wget --no-check-certificate --progress=bar:force -P /opt https://www.fil.ion
  && unzip -q /opt/spm${SPM_VERSION}_${SPM_REVISION}_Linux_${MATLAB_VERSION}.zip -d /opt \
  && rm -f /opt/spm${SPM_VERSION}_${SPM_REVISION}_Linux_${MATLAB_VERSION}.zip \
  && /opt/spm${SPM_VERSION}/spm${SPM_VERSION} function exit \
+ && sed -i '33,35d' /opt/spm12/run_spm12.sh \
  && chmod +x /opt/spm${SPM_VERSION}/spm${SPM_VERSION}
 
-#remove lines in spm run script which loads LD_PRELOAD
-RUN sed -i '33,35d' /opt/spm12/run_spm12.sh
 
-#Remove user warning from dicom init file
-#RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.7/site-packages/dicom/__init__.py
-#RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.7/site-packages/bids/grabbids/__init__.py
 
 # Set the working directory
 WORKDIR /computation
