@@ -9,7 +9,8 @@
          "vbm",
          "preprocess"
       ],
-      "preprocess":true
+      "preprocess":true,
+      "compspecVersion": 2
    },
    "computation":{
       "type":"docker",

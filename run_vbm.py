@@ -309,14 +309,13 @@ def args_parser(args):
             ((nib.load(args['input']['registration_template'])).shape))):
             template_dict['tpm_path'] = args['input']['registration_template']
         else:
-            sys.stdout.write(
-                json.dumps({
+            return {
                     "output": {
                         "message": "Non-standard Registration template "
                     },
                     "cache": {},
                     "success": True
-                }))
+                }
             sys.exit()
 
 
@@ -363,11 +362,9 @@ def data_parser(args):
         covars=covariates,
         data_type='nifti',
         **template_dict)
-    sys.stdout.write(computation_output)
+    return computation_output
 
-
-if __name__ == '__main__':
-
+def start(args):
     try:
         # Check if spm is running
         with stdchannel_redirected(sys.stderr, os.devnull):
@@ -376,7 +373,7 @@ if __name__ == '__main__':
             raise EnvironmentError("spm unable to start in vbm docker")
 
         # Read json args
-        args = json.loads(sys.stdin.read())
+        # args = json.loads(sys.stdin.read())
 
         # Parse args
         args_parser(args)
