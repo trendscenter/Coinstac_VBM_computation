@@ -1,11 +1,11 @@
-FROM coinstacteam/coinstac-base:centos7
+FROM centos:7
 
 WORKDIR /computation
 #-------------------------------------------------
 # Install Miniconda, and set up Python environment
 #-------------------------------------------------
 # Install required libraries
-RUN yum install -y -q gcc libXext.x86_64 libXt.x86_64 wget \
+RUN yum install -y -q gcc libXext.x86_64 libXt.x86_64 unzip zip wget \
     && yum clean packages \
     && rm -rf /var/cache/yum/* /tmp/* /var/tmp/*
 ENV PATH=/opt/miniconda/envs/default/bin:$PATH
@@ -14,7 +14,7 @@ RUN curl -ssL -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-lat
     && rm -f miniconda.sh \
     && /opt/miniconda/bin/conda update -n base conda \
     && /opt/miniconda/bin/conda config --add channels conda-forge \
-    && /opt/miniconda/bin/conda create -y -q -n default python=3.7 \
+    && /opt/miniconda/bin/conda create -y -q -n default python \
     && rm -rf /opt/miniconda/[!envs]*
 
 
@@ -45,7 +45,6 @@ RUN wget --no-check-certificate --progress=bar:force -P /opt https://www.fil.ion
  && sed -i '33,35d' /opt/spm12/run_spm12.sh \
  && /opt/spm${SPM_VERSION}/spm${SPM_VERSION} function exit \
  && chmod +x /opt/spm${SPM_VERSION}/spm${SPM_VERSION}
-
 
 
 # Set the working directory
