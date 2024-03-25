@@ -38,8 +38,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
 import ujson as json
 
-# Load bids layout interface for parsing bids data to extract T1w scans,subject names etc.
-from bids.grabbids import BIDSLayout
+
 
 import nibabel as nib
 import nipype.pipeline.engine as pe
@@ -88,20 +87,7 @@ def setup_pipeline(data='', write_dir='', data_type=None, **template_dict):
         [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(
             **template_dict)
 
-        if data_type == 'bids':
-            # Runs the pipeline on each subject serially
-            layout = BIDSLayout(data)
-            smri_data = layout.get(
-                type=template_dict['scan_type'], extensions='.nii.gz')
-            return run_pipeline(
-                write_dir,
-                smri_data,
-                reorient,
-                datasink,
-                vbm_preprocess,
-                data_type='bids',
-                **template_dict)
-        elif data_type == 'nifti':
+        if data_type == 'nifti':
             # Runs the pipeline on each nifti file serially
             smri_data = data
             return run_pipeline(
