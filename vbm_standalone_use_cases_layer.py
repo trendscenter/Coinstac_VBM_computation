@@ -147,13 +147,7 @@ def write_readme_files(write_dir='', data_type=None, **template_dict):
     """This function writes readme files"""
 
     # Write a text file with info. on each of the output nifti files
-    if data_type == 'bids':
-        with open(
-                os.path.join(write_dir, template_dict['outputs_manual_name']),
-                'w') as fp:
-            fp.write(template_dict['bids_outputs_manual_content'])
-            fp.close()
-    elif data_type == 'nifti':
+    if data_type == 'nifti':
         with open(
                 os.path.join(write_dir, template_dict['outputs_manual_name']),
                 'w') as fp:
@@ -470,15 +464,6 @@ def run_pipeline(write_dir,
         try:
 
             # Assign subject,session id and input nifti file for reorienation node
-            if data_type == 'bids':
-                session_id = getattr(each_sub, 'session', None)
-                if session_id is not None:
-                    session = 'ses-' + getattr(each_sub, 'session', None)
-                else:
-                    session = ''
-                nii_output = ((
-                    each_sub.filename).split('/')[-1]).split('.gz')[0]
-                n1_img = nib.load(each_sub.filename)
 
             if data_type == 'nifti':
                 session = ''
