@@ -43,6 +43,8 @@ RUN wget --no-check-certificate --progress=bar:force -P /opt https://www.fil.ion
  && unzip -q /opt/spm${SPM_VERSION}_${SPM_REVISION}_Linux_${MATLAB_VERSION}.zip -d /opt \
  && rm -f /opt/spm${SPM_VERSION}_${SPM_REVISION}_Linux_${MATLAB_VERSION}.zip \
  && sed -i '33,35d' /opt/spm12/run_spm12.sh \
+ && unzip /opt/spm12/spm12.ctf \
+ && chmod -R 777 /opt/spm12/fsroot \
  && /opt/spm${SPM_VERSION}/spm${SPM_VERSION} function exit \
  && chmod +x /opt/spm${SPM_VERSION}/spm${SPM_VERSION}
 
