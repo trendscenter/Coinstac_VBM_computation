@@ -64,4 +64,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /computation
 
 # allow all inputs on vbm interface
-COPY preprocess.py /opt/miniconda/envs/default/lib/python3.7/site-packages/nipype/interfaces/spm/
+COPY preprocess.py /opt/miniconda/envs/default/lib/python3.12/site-packages/nipype/interfaces/spm/
