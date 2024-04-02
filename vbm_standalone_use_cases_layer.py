@@ -607,7 +607,7 @@ def run_pipeline(write_dir,
                 os.path.join(
                     os.path.dirname(write_dir),
                     template_dict['display_image_name']), "rb") as imageFile:
-            encoded_image_str = base64.b64encode(imageFile.read())
+            encoded_image_str = str(base64.b64encode(imageFile.read()))
 
         return json.dumps({
             "output": {
