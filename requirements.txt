@@ -16,3 +16,4 @@ coverage
 scikit-learn
 pillow 
 tornado
+coinstac
