@@ -174,7 +174,7 @@ def nii_to_image_converter(write_dir, label, **template_dict):
     file = os.path.join(write_dir, template_dict['display_nifti'])
 
     mask = nib.load(file)
-    new_data = mask.get_data()
+    new_data = mask.get_fdata()
     clipped_img = nib.Nifti1Image(new_data, mask.affine, mask.header)
 
     plotting.plot_anat(
@@ -194,7 +194,7 @@ def get_corr(segmented_file, write_dir, sub_id, **template_dict):
 
     def extract_data(file):
         a_data = nib.load(file)
-        t_data = a_data.get_data()
+        t_data = a_data.get_fdata()
         if len(t_data.shape) == 4:
             tx, ty, tz, im = t_data.shape
             st_data = t_data[:, :, :, 0]
