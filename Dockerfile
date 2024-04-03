@@ -65,3 +65,5 @@ COPY . /computation
 
 # allow all inputs on vbm interface
 COPY preprocess.py /opt/miniconda/envs/default/lib/python3.12/site-packages/nipype/interfaces/spm/
+
+CMD ["python", "/computation/entry.py"]

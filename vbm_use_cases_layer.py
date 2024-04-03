@@ -661,27 +661,27 @@ def run_pipeline(write_dir,
         write_readme_files(write_dir, data_type, output_message, **template_dict)
 
         if preprocessed_percentage>template_dict['qc_threshold']:
-            return json.dumps({
+            return {
                 "output": {
                     "covariates":template_dict['covariates'],
                     "data":template_dict['regression_data']
                 },
                 "cache": {},
                 "success": True
-            })
+            }
         else:
-            return json.dumps({
+            return {
                 "output": {
                     "message": output_message
                 },
                 "cache": {},
                 "success": True
-            })
+            }
     else:
-        return json.dumps({
+        return {
             "output": {
                 "message": "None of the input data could be pre-processed. Please check the data!"
             },
             "cache": {},
             "success": True
-        })
+        }

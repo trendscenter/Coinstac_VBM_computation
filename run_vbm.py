@@ -365,23 +365,20 @@ def data_parser(args):
     return computation_output
 
 def start(args):
-    try:
-        # Check if spm is running
-        with stdchannel_redirected(sys.stderr, os.devnull):
-            spm_check = software_check()
-        if spm_check != template_dict['spm_version']:
-            raise EnvironmentError("spm unable to start in vbm docker")
+    # Check if spm is running
+    with stdchannel_redirected(sys.stderr, os.devnull):
+        spm_check = software_check()
+    if spm_check != template_dict['spm_version']:
+        raise EnvironmentError("spm unable to start in vbm docker")
 
-        # Read json args
-        # args = json.loads(sys.stdin.read())
+    # Read json args
+    # args = json.loads(sys.stdin.read())
 
-        # Parse args
-        args_parser(args)
+    # Parse args
+    args_parser(args)
 
-        #Convert reorient params to mat file if they exist
-        convert_reorientparams_save_to_mat_script()
+    #Convert reorient params to mat file if they exist
+    convert_reorientparams_save_to_mat_script()
 
-        # Parse input data and run the code
-        data_parser(args)
-    except Exception as e:
-        sys.stderr.write('Unable to read input data or parse inputspec.json Error_log:'+str(e)+str(traceback.format_exc()))
+    # Parse input data and run the code
+    return data_parser(args)
