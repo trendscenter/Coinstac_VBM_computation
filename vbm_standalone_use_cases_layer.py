@@ -82,12 +82,11 @@ def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_
             After setting up the pipeline here , the pipeline is run with run_pipeline function
 
         """
-    try:
         # Create pipeline nodes from vbm_entities_layer.py and pass them run_pipeline function
-        [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(
+    [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(
             **template_dict)
 
-        if data_type == 'nifti':
+    if data_type == 'nifti':
             # Runs the pipeline on each nifti file serially
             smri_data = data
             return run_pipeline(
@@ -99,7 +98,7 @@ def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_
                 covars,
                 data_type='nifti',
                 **template_dict)
-        elif data_type == 'dicoms':
+    elif data_type == 'dicoms':
             # Runs the pipeline on each nifti file serially
             smri_data = data
             return run_pipeline(
@@ -111,15 +110,7 @@ def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_
                 covars,
                 data_type='dicoms',
                 **template_dict)
-    except Exception as e:
-        sys.stdout.write(
-            json.dumps({
-                "output": {
-                    "message": str(e)
-                },
-                "cache": {},
-                "success": True
-            }))
+
 
 
 def remove_tmp_files():
@@ -609,7 +600,7 @@ def run_pipeline(write_dir,
                     template_dict['display_image_name']), "rb") as imageFile:
             encoded_image_str = str(base64.b64encode(imageFile.read()))
 
-        return json.dumps({
+        return {
             "output": {
                 "message": output_message,
                 "download_outputs": download_outputs_path,
@@ -618,13 +609,13 @@ def run_pipeline(write_dir,
             },
             "cache": {},
             "success": True
-        })
+        }
     else:
         # If the last file wc1*.png is not created for some reason in pre-processing
-        return json.dumps({
+        return {
             "output": {
                 "message": " Error log:" + str(error_log)
             },
             "cache": {},
             "success": True
-        })
+        }
