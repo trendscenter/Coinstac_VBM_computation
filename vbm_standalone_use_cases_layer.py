@@ -116,22 +116,22 @@ def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_
 def remove_tmp_files():
     """this function removes any tmp files in the docker"""
 
-    for a in glob.glob('/var/tmp/*'):
-        os.remove(a)
+    # for a in glob.glob('/var/tmp/*'):
+    #     os.remove(a)
 
-    for b in glob.glob(os.getcwd() + '/crash*'):
-        os.remove(b)
+    # for b in glob.glob(os.getcwd() + '/crash*'):
+    #     os.remove(b)
 
     for c in glob.glob(os.getcwd() + '/tmp*'):
         shutil.rmtree(c, ignore_errors=True)
 
-    for d in glob.glob(os.getcwd() + '/__pycache__'):
-        shutil.rmtree(d, ignore_errors=True)
+    # for d in glob.glob(os.getcwd() + '/__pycache__'):
+    #     shutil.rmtree(d, ignore_errors=True)
 
-    shutil.rmtree(os.getcwd() + '/vbm_preprocess', ignore_errors=True)
+    # shutil.rmtree(os.getcwd() + '/vbm_preprocess', ignore_errors=True)
 
-    if os.path.exists(os.getcwd() + '/pyscript.m'):
-        os.remove(os.getcwd() + '/pyscript.m')
+    # if os.path.exists(os.getcwd() + '/pyscript.m'):
+    #     os.remove(os.getcwd() + '/pyscript.m')
 
 
 def write_readme_files(write_dir='', data_type=None, **template_dict):
@@ -548,8 +548,8 @@ def run_pipeline(write_dir,
                                  template_dict['display_image_name']),
                     os.path.dirname(write_dir))
 
-        # finally:
-        #     remove_tmp_files()
+        finally:
+            remove_tmp_files()
 
     vbm_spm12_file_output.make_file_output(write_dir, template_dict, covars)
 
