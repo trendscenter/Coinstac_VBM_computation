@@ -548,8 +548,8 @@ def run_pipeline(write_dir,
                                  template_dict['display_image_name']),
                     os.path.dirname(write_dir))
 
-        finally:
-            remove_tmp_files()
+        # finally:
+        #     remove_tmp_files()
 
     vbm_spm12_file_output.make_file_output(write_dir, template_dict, covars)
 
