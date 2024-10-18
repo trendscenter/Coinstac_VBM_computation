@@ -5,6 +5,8 @@ WORKDIR /computation
 # Install Miniconda, and set up Python environment
 #-------------------------------------------------
 # Install required libraries
+RUN sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && \
+    sed -i 's|^#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Base.repo
 RUN yum install -y -q gcc libXext.x86_64 libXt.x86_64 unzip zip wget \
     && yum clean packages \
     && rm -rf /var/cache/yum/* /tmp/* /var/tmp/*
@@ -14,7 +16,7 @@ RUN curl -ssL -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-lat
     && rm -f miniconda.sh \
     && /opt/miniconda/bin/conda update -n base conda \
     && /opt/miniconda/bin/conda config --add channels conda-forge \
-    && /opt/miniconda/bin/conda create -y -q -n default python \
+    && /opt/miniconda/bin/conda create -y -q -n default python=3.11 \
     && rm -rf /opt/miniconda/[!envs]*
 
 
@@ -64,6 +66,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /computation
 
 # allow all inputs on vbm interface
-COPY preprocess.py /opt/miniconda/envs/default/lib/python3.12/site-packages/nipype/interfaces/spm/
+COPY preprocess.py /opt/miniconda/envs/default/lib/python3.11/site-packages/nipype/interfaces/spm/
 
 CMD ["python", "/computation/entry.py"]
