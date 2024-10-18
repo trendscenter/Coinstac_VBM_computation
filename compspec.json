@@ -9,11 +9,12 @@
          "vbm",
          "preprocess"
       ],
-      "preprocess":true
+      "preprocess":true,
+      "compspecVersion": 2
    },
    "computation":{
       "type":"docker",
-      "dockerImage":"vbm-pre",
+      "dockerImage":"vbm_pre",
       "command":[
          "python",
          "\/computation\/run_vbm.py"

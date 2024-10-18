@@ -1,11 +1,13 @@
-FROM coinstacteam/coinstac-base:centos7
+FROM centos:7
 
 WORKDIR /computation
 #-------------------------------------------------
 # Install Miniconda, and set up Python environment
 #-------------------------------------------------
 # Install required libraries
-RUN yum install -y -q gcc libXext.x86_64 libXt.x86_64 \
+RUN sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && \
+    sed -i 's|^#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Base.repo
+RUN yum install -y -q gcc libXext.x86_64 libXt.x86_64 unzip zip wget \
     && yum clean packages \
     && rm -rf /var/cache/yum/* /tmp/* /var/tmp/*
 ENV PATH=/opt/miniconda/envs/default/bin:$PATH
@@ -14,42 +16,42 @@ RUN curl -ssL -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-lat
     && rm -f miniconda.sh \
     && /opt/miniconda/bin/conda update -n base conda \
     && /opt/miniconda/bin/conda config --add channels conda-forge \
-    && /opt/miniconda/bin/conda create -y -q -n default python=3.7 \
+    && /opt/miniconda/bin/conda create -y -q -n default python=3.11 \
     && rm -rf /opt/miniconda/[!envs]*
 
-RUN npm install -g bids-validator
 
-#Install other python packages
-RUN pip install med2image
-RUN pip install pillow tornado==5.0.2
+# Install MATLAB MCR in /opt/mcr/
+ENV MATLAB_VERSION R2019b
+ENV MCR_VERSION v97
+ENV MCR_UPDATE 9
+RUN mkdir /opt/mcr_install \
+ && mkdir /opt/mcr \
+ && wget --progress=bar:force -P /opt/mcr_install https://ssd.mathworks.com/supportfiles/downloads/${MATLAB_VERSION}/Release/${MCR_UPDATE}/deployment_files/installer/complete/glnxa64/MATLAB_Runtime_${MATLAB_VERSION}_Update_${MCR_UPDATE}_glnxa64.zip \
+ && unzip -q /opt/mcr_install/MATLAB_Runtime_${MATLAB_VERSION}_Update_${MCR_UPDATE}_glnxa64.zip -d /opt/mcr_install \
+ && /opt/mcr_install/install -destinationFolder /opt/mcr -agreeToLicense yes -mode silent \
+ && rm -rf /opt/mcr_install /tmp/*
 
+# Install SPM Standalone in /opt/spm12/
+ENV SPM_VERSION 12
+ENV SPM_REVISION r7771
+ENV LD_LIBRARY_PATH /opt/mcr/${MCR_VERSION}/runtime/glnxa64:/opt/mcr/${MCR_VERSION}/bin/glnxa64:/opt/mcr/${MCR_VERSION}/sys/os/glnxa64:/opt/mcr/${MCR_VERSION}/sys/opengl/lib/glnxa64:/opt/mcr/${MCR_VERSION}/extern/bin/glnxa64
+ENV MCR_INHIBIT_CTF_LOCK 1
+ENV SPM_HTML_BROWSER 0
+# Running SPM once with "function exit" tests the succesfull installation *and*
+# extracts the ctf archive which is necessary if singularity is going to be
+# used later on, because singularity containers are read-only.
+# Also, set +x on the entrypoint for non-root container invocations
+RUN wget --no-check-certificate --progress=bar:force -P /opt https://www.fil.ion.ucl.ac.uk/spm/download/restricted/utopia/spm12/spm${SPM_VERSION}_${SPM_REVISION}_Linux_${MATLAB_VERSION}.zip \
+ && unzip -q /opt/spm${SPM_VERSION}_${SPM_REVISION}_Linux_${MATLAB_VERSION}.zip -d /opt \
+ && rm -f /opt/spm${SPM_VERSION}_${SPM_REVISION}_Linux_${MATLAB_VERSION}.zip \
+ && sed -i '33,35d' /opt/spm12/run_spm12.sh \
+ && /opt/spm${SPM_VERSION}/spm${SPM_VERSION} function exit \
+ && chmod +x /opt/spm${SPM_VERSION}/spm${SPM_VERSION}
 
-#----------------------
-# Install MCR and SPM12
-#----------------------
-# Install MATLAB Compiler Runtime
-WORKDIR /opt
-RUN curl -sSL -o mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2018b/deployment_files/R2018b/installers/glnxa64/MCR_R2018b_glnxa64_installer.zip \
-    && unzip -q mcr.zip -d mcrtmp \
-    && mcrtmp/install -destinationFolder /opt/mcr -mode silent -agreeToLicense yes \
-    && rm -rf mcrtmp mcr.zip /tmp/*
-
- # Install standalone SPM
-WORKDIR /opt
-RUN curl -sSL -o spm.zip http://www.fil.ion.ucl.ac.uk/spm/download/restricted/utopia/dev/soon_gone/spm12_latest_Linux_R2018b.zip \
-    && unzip -q spm.zip \
-    && unzip /opt/spm12/spm12.ctf -d /opt/spm12/ \
-    && rm -rf spm.zip
-ENV MATLABCMD=/opt/mcr/v*/toolbox/matlab \
-    SPMMCRCMD="/opt/spm*/run_spm*.sh /opt/mcr/v*/ script" \
-    FORCE_SPMMCR=1 \
-    LD_LIBRARY_PATH=/opt/mcr/v*/runtime/glnxa64:/opt/mcr/v*/bin/glnxa64:/opt/mcr/v*/sys/os/glnxa64:$LD_LIBRARY_PATH
-
-RUN chmod -R 777 /opt/spm12
-
-#Remove user warning from dicom init file
-#RUN sed -i '53d' /opt/miniconda/envs/default/lib/python3.7/site-packages/dicom/__init__.py
-#RUN sed -i '6d' /opt/miniconda/envs/default/lib/python3.7/site-packages/bids/grabbids/__init__.py
+#Unzip /opt/spm12/spm12.ctf file 
+WORKDIR /opt/spm12
+RUN unzip spm12.ctf \
+ && chmod -R 777 /opt/spm12/fsroot 
 
 # Set the working directory
 WORKDIR /computation
@@ -64,4 +66,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /computation
 
 # allow all inputs on vbm interface
-COPY preprocess.py /opt/miniconda/envs/default/lib/python3.7/site-packages/nipype/interfaces/spm/
+COPY preprocess.py /opt/miniconda/envs/default/lib/python3.11/site-packages/nipype/interfaces/spm/
+
+CMD ["python", "/computation/entry.py"]

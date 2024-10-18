@@ -64,9 +64,9 @@ logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
 template_dict = {
     'spm_version':
-    '12.7507',
+    '12.7771',
     'matlab_cmd':
-    '/opt/spm12/run_spm12.sh /opt/mcr/v95 script',
+    '/opt/spm12/run_spm12.sh /opt/mcr/v97 script',
     'spm_path':
     '/opt/spm12/fsroot',
     'tpm_path':
@@ -309,14 +309,13 @@ def args_parser(args):
             ((nib.load(args['input']['registration_template'])).shape))):
             template_dict['tpm_path'] = args['input']['registration_template']
         else:
-            sys.stdout.write(
-                json.dumps({
+            return {
                     "output": {
                         "message": "Non-standard Registration template "
                     },
                     "cache": {},
                     "success": True
-                }))
+                }
             sys.exit()
 
 
@@ -363,28 +362,23 @@ def data_parser(args):
         covars=covariates,
         data_type='nifti',
         **template_dict)
-    sys.stdout.write(computation_output)
+    return computation_output
 
+def start(args):
+    # Check if spm is running
+    with stdchannel_redirected(sys.stderr, os.devnull):
+        spm_check = software_check()
+    if spm_check != template_dict['spm_version']:
+        raise EnvironmentError("spm unable to start in vbm docker")
 
-if __name__ == '__main__':
+    # Read json args
+    # args = json.loads(sys.stdin.read())
 
-    try:
-        # Check if spm is running
-        with stdchannel_redirected(sys.stderr, os.devnull):
-            spm_check = software_check()
-        if spm_check != template_dict['spm_version']:
-            raise EnvironmentError("spm unable to start in vbm docker")
+    # Parse args
+    args_parser(args)
 
-        # Read json args
-        args = json.loads(sys.stdin.read())
+    #Convert reorient params to mat file if they exist
+    convert_reorientparams_save_to_mat_script()
 
-        # Parse args
-        args_parser(args)
-
-        #Convert reorient params to mat file if they exist
-        convert_reorientparams_save_to_mat_script()
-
-        # Parse input data and run the code
-        data_parser(args)
-    except Exception as e:
-        sys.stderr.write('Unable to read input data or parse inputspec.json Error_log:'+str(e)+str(traceback.format_exc()))
+    # Parse input data and run the code
+    return data_parser(args)

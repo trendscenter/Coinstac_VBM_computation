@@ -40,8 +40,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
 import ujson as json
 
-# Load bids layout interface for parsing bids data to extract T1w scans,subject names etc.
-from bids.grabbids import BIDSLayout
+
 
 import nibabel as nib
 import nipype.pipeline.engine as pe
@@ -83,26 +82,11 @@ def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_
             After setting up the pipeline here , the pipeline is run with run_pipeline function
 
         """
-    try:
         # Create pipeline nodes from vbm_entities_layer.py and pass them run_pipeline function
-        [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(
+    [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(
             **template_dict)
 
-        if data_type == 'bids':
-            # Runs the pipeline on each subject serially
-            layout = BIDSLayout(data)
-            smri_data = layout.get(
-                type=template_dict['scan_type'], extensions='.nii.gz')
-            return run_pipeline(
-                write_dir,
-                smri_data,
-                reorient,
-                datasink,
-                vbm_preprocess,
-                covars,
-                data_type='bids',
-                **template_dict)
-        elif data_type == 'nifti':
+    if data_type == 'nifti':
             # Runs the pipeline on each nifti file serially
             smri_data = data
             return run_pipeline(
@@ -114,7 +98,7 @@ def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_
                 covars,
                 data_type='nifti',
                 **template_dict)
-        elif data_type == 'dicoms':
+    elif data_type == 'dicoms':
             # Runs the pipeline on each nifti file serially
             smri_data = data
             return run_pipeline(
@@ -126,49 +110,35 @@ def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_
                 covars,
                 data_type='dicoms',
                 **template_dict)
-    except Exception as e:
-        sys.stdout.write(
-            json.dumps({
-                "output": {
-                    "message": str(e)
-                },
-                "cache": {},
-                "success": True
-            }))
+
 
 
 def remove_tmp_files():
     """this function removes any tmp files in the docker"""
 
-    for a in glob.glob('/var/tmp/*'):
-        os.remove(a)
+    # for a in glob.glob('/var/tmp/*'):
+    #     os.remove(a)
 
-    for b in glob.glob(os.getcwd() + '/crash*'):
-        os.remove(b)
+    # for b in glob.glob(os.getcwd() + '/crash*'):
+    #     os.remove(b)
 
     for c in glob.glob(os.getcwd() + '/tmp*'):
         shutil.rmtree(c, ignore_errors=True)
 
-    for d in glob.glob(os.getcwd() + '/__pycache__'):
-        shutil.rmtree(d, ignore_errors=True)
+    # for d in glob.glob(os.getcwd() + '/__pycache__'):
+    #     shutil.rmtree(d, ignore_errors=True)
 
-    shutil.rmtree(os.getcwd() + '/vbm_preprocess', ignore_errors=True)
+    # shutil.rmtree(os.getcwd() + '/vbm_preprocess', ignore_errors=True)
 
-    if os.path.exists(os.getcwd() + '/pyscript.m'):
-        os.remove(os.getcwd() + '/pyscript.m')
+    # if os.path.exists(os.getcwd() + '/pyscript.m'):
+    #     os.remove(os.getcwd() + '/pyscript.m')
 
 
 def write_readme_files(write_dir='', data_type=None, **template_dict):
     """This function writes readme files"""
 
     # Write a text file with info. on each of the output nifti files
-    if data_type == 'bids':
-        with open(
-                os.path.join(write_dir, template_dict['outputs_manual_name']),
-                'w') as fp:
-            fp.write(template_dict['bids_outputs_manual_content'])
-            fp.close()
-    elif data_type == 'nifti':
+    if data_type == 'nifti':
         with open(
                 os.path.join(write_dir, template_dict['outputs_manual_name']),
                 'w') as fp:
@@ -195,7 +165,7 @@ def nii_to_image_converter(write_dir, label, **template_dict):
     file = os.path.join(write_dir, template_dict['display_nifti'])
 
     mask = nib.load(file)
-    new_data = mask.get_data()
+    new_data = mask.get_fdata()
     clipped_img = nib.Nifti1Image(new_data, mask.affine, mask.header)
 
     plotting.plot_anat(
@@ -215,7 +185,7 @@ def get_corr(segmented_file, write_dir, sub_id, **template_dict):
 
     def extract_data(file):
         a_data = nib.load(file)
-        t_data = a_data.get_data()
+        t_data = a_data.get_fdata()
         if len(t_data.shape) == 4:
             tx, ty, tz, im = t_data.shape
             st_data = t_data[:, :, :, 0]
@@ -485,15 +455,6 @@ def run_pipeline(write_dir,
         try:
 
             # Assign subject,session id and input nifti file for reorienation node
-            if data_type == 'bids':
-                session_id = getattr(each_sub, 'session', None)
-                if session_id is not None:
-                    session = 'ses-' + getattr(each_sub, 'session', None)
-                else:
-                    session = ''
-                nii_output = ((
-                    each_sub.filename).split('/')[-1]).split('.gz')[0]
-                n1_img = nib.load(each_sub.filename)
 
             if data_type == 'nifti':
                 session = ''
@@ -637,9 +598,9 @@ def run_pipeline(write_dir,
                 os.path.join(
                     os.path.dirname(write_dir),
                     template_dict['display_image_name']), "rb") as imageFile:
-            encoded_image_str = base64.b64encode(imageFile.read())
+            encoded_image_str = str(base64.b64encode(imageFile.read()))
 
-        return json.dumps({
+        return {
             "output": {
                 "message": output_message,
                 "download_outputs": download_outputs_path,
@@ -648,13 +609,13 @@ def run_pipeline(write_dir,
             },
             "cache": {},
             "success": True
-        })
+        }
     else:
         # If the last file wc1*.png is not created for some reason in pre-processing
-        return json.dumps({
+        return {
             "output": {
                 "message": " Error log:" + str(error_log)
             },
             "cache": {},
             "success": True
-        })
+        }

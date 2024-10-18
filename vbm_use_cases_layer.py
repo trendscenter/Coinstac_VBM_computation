@@ -38,8 +38,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
 import ujson as json
 
-# Load bids layout interface for parsing bids data to extract T1w scans,subject names etc.
-from bids.grabbids import BIDSLayout
+
 
 import nibabel as nib
 import nipype.pipeline.engine as pe
@@ -88,20 +87,7 @@ def setup_pipeline(data='', write_dir='', data_type=None, **template_dict):
         [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(
             **template_dict)
 
-        if data_type == 'bids':
-            # Runs the pipeline on each subject serially
-            layout = BIDSLayout(data)
-            smri_data = layout.get(
-                type=template_dict['scan_type'], extensions='.nii.gz')
-            return run_pipeline(
-                write_dir,
-                smri_data,
-                reorient,
-                datasink,
-                vbm_preprocess,
-                data_type='bids',
-                **template_dict)
-        elif data_type == 'nifti':
+        if data_type == 'nifti':
             # Runs the pipeline on each nifti file serially
             smri_data = data
             return run_pipeline(
@@ -159,13 +145,7 @@ def write_readme_files(write_dir='', data_type=None,log=None, **template_dict):
     """This function writes readme files"""
 
     # Write a text file with info. on each of the output nifti files
-    if data_type == 'bids':
-        with open(
-                os.path.join(write_dir, template_dict['outputs_manual_name']),
-                'w') as fp:
-            fp.write(template_dict['bids_outputs_manual_content'])
-            fp.close()
-    elif data_type == 'nifti':
+    if data_type == 'nifti':
         with open(
                 os.path.join(write_dir, template_dict['outputs_manual_name']),
                 'w') as fp:
@@ -511,17 +491,7 @@ def run_pipeline(write_dir,
 
         try:
 
-            # Assign subject,session id and input nifiti file for reorienation node
-            if data_type == 'bids':
-                sub_id = 'sub-' + each_sub.subject
-                session_id = getattr(each_sub, 'session', None)
-                if session_id is not None:
-                    session = 'ses-' + getattr(each_sub, 'session', None)
-                else:
-                    session = ''
-                nii_output = ((
-                    each_sub.filename).split('/')[-1]).split('.gz')[0]
-                n1_img = nib.load(each_sub.filename)
+            # Assign subject,session id and input nifiti file for reorienation nod
 
             if data_type == 'nifti':
                 id = id + 1
@@ -691,27 +661,27 @@ def run_pipeline(write_dir,
         write_readme_files(write_dir, data_type, output_message, **template_dict)
 
         if preprocessed_percentage>template_dict['qc_threshold']:
-            return json.dumps({
+            return {
                 "output": {
                     "covariates":template_dict['covariates'],
                     "data":template_dict['regression_data']
                 },
                 "cache": {},
                 "success": True
-            })
+            }
         else:
-            return json.dumps({
+            return {
                 "output": {
                     "message": output_message
                 },
                 "cache": {},
                 "success": True
-            })
+            }
     else:
-        return json.dumps({
+        return {
             "output": {
                 "message": "None of the input data could be pre-processed. Please check the data!"
             },
             "cache": {},
             "success": True
-        })
+        }
