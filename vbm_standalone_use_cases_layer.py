@@ -431,26 +431,7 @@ def run_pipeline(write_dir,
 
     for each_sub in smri_data:
         loop_counter += 1
-
-        subj = each_sub
-
-        file_ext = re.search(r".[0-9a-z]+$", subj, re.DOTALL).group()
-
-        if file_ext == '.gz':
-            if "/" in subj or "\\" in subj:
-                #If subject file strings have forward or back slashes
-                sub_id = re.sub(r".*[\\\/]{1}([\w]*).{1}[a-z]*.{1}[a-z]*$", "\\1", subj, 0, re.M)
-            else:
-                #Otherwise
-                sub_id = re.sub(r"([\w]*).{1}[a-z]*.{1}[a-z]*", "\\1", subj, 0, re.M)
-
-        if file_ext == '.nii':
-            if "/" in subj or "\\" in subj:
-                #If subject file strings have forward or back slashes
-                sub_id = re.sub(r".*[\\\/]{1}([\w]*).{1}[a-z]*$", "\\1", subj, 0, re.M)
-            else:
-                #Otherwise
-                sub_id = re.sub(r"([\w]*).{1}[a-z]*", "\\1", subj, 0, re.M)
+        sub_id=(each_sub.split('/')[-1]).split('.')[0]
 
         try:
 
@@ -458,7 +439,6 @@ def run_pipeline(write_dir,
 
             if data_type == 'nifti':
                 session = ''
-                nii_output = ((each_sub).split('/')[-1]).split('.gz')[0]
                 n1_img = nib.load(each_sub)
 
             if data_type == 'dicoms':
@@ -490,7 +470,7 @@ def run_pipeline(write_dir,
                 step saves the nifti file to output directory
                  """
                 if data_type != 'dicoms':
-                    nib.save(n1_img, os.path.join(vbm_out, nii_output))
+                    nib.save(n1_img, os.path.join(vbm_out, sub_id))
 
                 # Create vbm_spm12 dir under the specific sub-id/anat
                 os.makedirs(
