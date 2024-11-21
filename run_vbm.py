@@ -66,7 +66,7 @@ template_dict = {
     'spm_version':
     '12.7771',
     'matlab_cmd':
-    '/opt/spm12/run_spm12.sh /opt/mcr/v97 script',
+    '/opt/spm12/run_spm12.sh /opt/mcr/R2022b script',
     'spm_path':
     '/opt/spm12/fsroot',
     'tpm_path':
