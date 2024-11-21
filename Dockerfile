@@ -1,28 +1,34 @@
-FROM centos:7
+FROM python:3.8
+
+# Initiation of system
+RUN export MCR_CACHE_VERBOSE=true
+RUN apt-get update -y \
+ && apt-get install -y wget unzip libxext-dev libxt-dev libxmu-dev libglu1-mesa-dev libxrandr-dev build-essential gcc
 
 WORKDIR /computation
 #-------------------------------------------------
 # Install Miniconda, and set up Python environment
 #-------------------------------------------------
 # Install required libraries
-RUN sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && \
-    sed -i 's|^#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Base.repo
-RUN yum install -y -q gcc libXext.x86_64 libXt.x86_64 unzip zip wget \
-    && yum clean packages \
-    && rm -rf /var/cache/yum/* /tmp/* /var/tmp/*
-ENV PATH=/opt/miniconda/envs/default/bin:$PATH
-RUN curl -ssL -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    && bash miniconda.sh -b -p /opt/miniconda \
-    && rm -f miniconda.sh \
-    && /opt/miniconda/bin/conda update -n base conda \
-    && /opt/miniconda/bin/conda config --add channels conda-forge \
-    && /opt/miniconda/bin/conda create -y -q -n default python=3.11 \
-    && rm -rf /opt/miniconda/[!envs]*
+#RUN sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && \
+#    sed -i 's|^#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Base.repo
+#RUN yum install -y -q gcc libXext.x86_64 libXt.x86_64 unzip zip wget \
+#    && yum clean packages \
+#    && rm -rf /var/cache/yum/* /tmp/* /var/tmp/*
+#ENV PATH=/opt/miniconda/envs/default/bin:$PATH
+#RUN curl -ssL -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+#    && bash miniconda.sh -b -p /opt/miniconda \
+#    && rm -f miniconda.sh \
+#    && /opt/miniconda/bin/conda update -n base conda \
+#    && /opt/miniconda/bin/conda config --add channels conda-forge \
+#    && /opt/miniconda/bin/conda create -y -q -n default python=3.11 \
+#    && rm -rf /opt/miniconda/[!envs]*
 
 
 # Install MATLAB MCR in /opt/mcr/
-ENV MATLAB_VERSION R2019b
-ENV MCR_VERSION v97
+ENV MATLAB_VERSION R2022b
+ENV MCR_VERSION R2022b
+#ENV MCR_VERSION v97
 ENV MCR_UPDATE 9
 RUN mkdir /opt/mcr_install \
  && mkdir /opt/mcr \
@@ -66,6 +72,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /computation
 
 # allow all inputs on vbm interface
-COPY preprocess.py /opt/miniconda/envs/default/lib/python3.11/site-packages/nipype/interfaces/spm/
+COPY preprocess.py /usr/local/lib/python3.8/site-packages/nipype/interfaces/spm/
+#COPY preprocess.py /opt/miniconda/envs/default/lib/python3.11/site-packages/nipype/interfaces/spm/
 
 CMD ["python", "/computation/entry.py"]
