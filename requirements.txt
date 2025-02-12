@@ -1,7 +1,7 @@
 astor==0.8.1
 asyncio==3.4.3
 bids-validator==1.14.4
-certifi==2024.2.2
+certifi==2024.7.4
 charset-normalizer==3.3.2
 ci-info==0.3.0
 citeproc-py==0.6.0
