@@ -16,7 +16,11 @@ BIDS_DIR contains bids data
 success=True means program finished execution , despite the success or failure of the code
 This is to indicate to coinstac that program finished execution
 """
-import contextlib,traceback
+import contextlib
+import os
+import sys
+import traceback
+import warnings
 
 
 @contextlib.contextmanager
@@ -32,6 +36,8 @@ def stdchannel_redirected(stdchannel, dest_filename):
             libraries.append('rt')
     """
 
+    oldstdchannel = None
+    dest_file = None
     try:
         oldstdchannel = os.dup(stdchannel.fileno())
         dest_file = open(dest_filename, 'w')
@@ -46,7 +52,6 @@ def stdchannel_redirected(stdchannel, dest_filename):
 
 
 import ujson as json
-import warnings, os, glob, sys
 import nibabel as nib
 import numpy as np, scipy.io, spm_matrix as s
 
@@ -237,77 +242,79 @@ def convert_reorientparams_save_to_mat_script():
 def args_parser(args):
     """ This function extracts options from arguments
     """
-    if 'options_smoothing_x_mm' in args['input']:
-         template_dict['FWHM_SMOOTH'][0]= float(args['input']['options_smoothing_x_mm'])
-    if 'options_smoothing_y_mm' in args['input']:
-         template_dict['FWHM_SMOOTH'][1]= float(args['input']['options_smoothing_y_mm'])
-    if 'options_smoothing_z_mm' in args['input']:
-        template_dict['FWHM_SMOOTH'][2] = float(args['input']['options_smoothing_z_mm'])
-    if 'options_smoothing_implicit_masking' in args['input']:
-        template_dict['implicit_masking']=args['input']['options_smoothing_implicit_masking']
+    input_args = args.get('input', {})
 
-    if args['input']['standalone']:
-        template_dict['standalone'] = args['input']['standalone']
+    if 'options_smoothing_x_mm' in input_args:
+         template_dict['FWHM_SMOOTH'][0]= float(input_args['options_smoothing_x_mm'])
+    if 'options_smoothing_y_mm' in input_args:
+         template_dict['FWHM_SMOOTH'][1]= float(input_args['options_smoothing_y_mm'])
+    if 'options_smoothing_z_mm' in input_args:
+        template_dict['FWHM_SMOOTH'][2] = float(input_args['options_smoothing_z_mm'])
+    if 'options_smoothing_implicit_masking' in input_args:
+        template_dict['implicit_masking']=input_args['options_smoothing_implicit_masking']
+
+    if input_args.get('standalone'):
+        template_dict['standalone'] = input_args['standalone']
     else:
-        template_dict['covariates'] = args['input']['covariates']
-        template_dict['regression_data'] = args['input']['data']
+        template_dict['covariates'] = input_args.get('covariates', [])
+        template_dict['regression_data'] = input_args.get('data', [])
         #template_dict['regression_file_input_type'] = args['input']['regression_file_input_type']
 
-    if 'options_reorient_params_x_mm' in args['input']:
-        template_dict['options_reorient_params_x_mm'] = float(args['input']['options_reorient_params_x_mm'])
-    if 'options_reorient_params_y_mm' in args['input']:
-        template_dict['options_reorient_params_y_mm'] = float(args['input']['options_reorient_params_y_mm'])
-    if 'options_reorient_params_z_mm' in args['input']:
-        template_dict['options_reorient_params_z_mm'] = float(args['input']['options_reorient_params_z_mm'])
-    if 'options_reorient_params_pitch' in args['input']:
-        template_dict['options_reorient_params_pitch'] = float((args['input']['options_reorient_params_pitch']))
-    if 'options_reorient_params_roll' in args['input']:
-        template_dict['options_reorient_params_roll'] = float((args['input']['options_reorient_params_roll']))
-    if 'options_reorient_params_yaw' in args['input']:
-        template_dict['options_reorient_params_yaw'] = float((args['input']['options_reorient_params_yaw']))
-    if 'options_reorient_params_x_scaling' in args['input']:
-        template_dict['options_reorient_params_x_scaling'] = float(args['input']['options_reorient_params_x_scaling'])
-    if 'options_reorient_params_y_scaling' in args['input']:
-        template_dict['options_reorient_params_y_scaling'] = float(args['input']['options_reorient_params_y_scaling'])
-    if 'options_reorient_params_z_scaling' in args['input']:
-        template_dict['options_reorient_params_z_scaling'] = float(args['input']['options_reorient_params_z_scaling'])
-    if 'options_reorient_params_x_affine' in args['input']:
-        template_dict['options_reorient_params_x_affine'] = float(args['input']['options_reorient_params_x_affine'])
-    if 'options_reorient_params_y_affine' in args['input']:
-        template_dict['options_reorient_params_y_affine'] = float(args['input']['options_reorient_params_y_affine'])
-    if 'options_reorient_params_z_affine' in args['input']:
-        template_dict['options_reorient_params_z_affine'] = float(args['input']['options_reorient_params_z_affine'])
+    if 'options_reorient_params_x_mm' in input_args:
+        template_dict['options_reorient_params_x_mm'] = float(input_args['options_reorient_params_x_mm'])
+    if 'options_reorient_params_y_mm' in input_args:
+        template_dict['options_reorient_params_y_mm'] = float(input_args['options_reorient_params_y_mm'])
+    if 'options_reorient_params_z_mm' in input_args:
+        template_dict['options_reorient_params_z_mm'] = float(input_args['options_reorient_params_z_mm'])
+    if 'options_reorient_params_pitch' in input_args:
+        template_dict['options_reorient_params_pitch'] = float((input_args['options_reorient_params_pitch']))
+    if 'options_reorient_params_roll' in input_args:
+        template_dict['options_reorient_params_roll'] = float((input_args['options_reorient_params_roll']))
+    if 'options_reorient_params_yaw' in input_args:
+        template_dict['options_reorient_params_yaw'] = float((input_args['options_reorient_params_yaw']))
+    if 'options_reorient_params_x_scaling' in input_args:
+        template_dict['options_reorient_params_x_scaling'] = float(input_args['options_reorient_params_x_scaling'])
+    if 'options_reorient_params_y_scaling' in input_args:
+        template_dict['options_reorient_params_y_scaling'] = float(input_args['options_reorient_params_y_scaling'])
+    if 'options_reorient_params_z_scaling' in input_args:
+        template_dict['options_reorient_params_z_scaling'] = float(input_args['options_reorient_params_z_scaling'])
+    if 'options_reorient_params_x_affine' in input_args:
+        template_dict['options_reorient_params_x_affine'] = float(input_args['options_reorient_params_x_affine'])
+    if 'options_reorient_params_y_affine' in input_args:
+        template_dict['options_reorient_params_y_affine'] = float(input_args['options_reorient_params_y_affine'])
+    if 'options_reorient_params_z_affine' in input_args:
+        template_dict['options_reorient_params_z_affine'] = float(input_args['options_reorient_params_z_affine'])
 
-    if 'options_BIAS_REGULARISATION' in args['input']:
-        template_dict['BIAS_REGULARISATION']=float(args['input']['options_BIAS_REGULARISATION'])
+    if 'options_BIAS_REGULARISATION' in input_args:
+        template_dict['BIAS_REGULARISATION']=float(input_args['options_BIAS_REGULARISATION'])
 
-    if 'options_FWHM_GAUSSIAN_SMOOTH_BIAS' in args['input']:
-        template_dict['FWHM_GAUSSIAN_SMOOTH_BIAS']=args['input']['options_FWHM_GAUSSIAN_SMOOTH_BIAS']
+    if 'options_FWHM_GAUSSIAN_SMOOTH_BIAS' in input_args:
+        template_dict['FWHM_GAUSSIAN_SMOOTH_BIAS']=input_args['options_FWHM_GAUSSIAN_SMOOTH_BIAS']
 
-    if 'options_affine_regularization' in args['input']:
-        template_dict['affine_regularization']=args['input']['options_affine_regularization']
+    if 'options_affine_regularization' in input_args:
+        template_dict['affine_regularization']=input_args['options_affine_regularization']
 
-    if 'options_warping_regularization' in args['input']:
-        if len(args['input']['options_warping_regularization'])==5:
-            template_dict['warping_regularization']=args['input']['options_warping_regularization']
+    if 'options_warping_regularization' in input_args:
+        if len(input_args['options_warping_regularization'])==5:
+            template_dict['warping_regularization']=input_args['options_warping_regularization']
 
-    if 'options_sampling_distance' in args['input']:
-        template_dict['sampling_distance']=float(args['input']['options_sampling_distance'])
+    if 'options_sampling_distance' in input_args:
+        template_dict['sampling_distance']=float(input_args['options_sampling_distance'])
 
-    if 'options_mrf_weighting' in args['input']:
-        template_dict['mrf_weighting']=float(args['input']['options_mrf_weighting'])
+    if 'options_mrf_weighting' in input_args:
+        template_dict['mrf_weighting']=float(input_args['options_mrf_weighting'])
 
-    if 'options_cleanup' in args['input']:
-        template_dict['cleanup']=int(args['input']['options_cleanup'])
+    if 'options_cleanup' in input_args:
+        template_dict['cleanup']=int(input_args['options_cleanup'])
 
-    if 'regression_resample_voxel_size' in args['input']:
-        template_dict['regression_resample_voxel_size']=tuple([float(args['input']['regression_resample_voxel_size'])]*3)
+    if 'regression_resample_voxel_size' in input_args:
+        template_dict['regression_resample_voxel_size']=tuple([float(input_args['regression_resample_voxel_size'])]*3)
 
-    if 'registration_template' in args['input']:
-        if os.path.isfile(args['input']['registration_template']) and (str(
+    if 'registration_template' in input_args:
+        if os.path.isfile(input_args['registration_template']) and (str(
                 ((nib.load(template_dict['tpm_path'])).shape)) == str(
-            ((nib.load(args['input']['registration_template'])).shape))):
-            template_dict['tpm_path'] = args['input']['registration_template']
+            ((nib.load(input_args['registration_template'])).shape))):
+            template_dict['tpm_path'] = input_args['registration_template']
         else:
             return {
                     "output": {
@@ -316,7 +323,6 @@ def args_parser(args):
                     "cache": {},
                     "success": True
                 }
-            sys.exit()
 
 
 def data_parser(args):
@@ -337,7 +343,7 @@ def data_parser(args):
         if not os.path.isfile(x):
             raise Exception("File does not exist or can't be read: " + str(x));
     if not os.access(WriteDir, os.W_OK):
-        raise Exception("Output write permissions denied: " + str(WritDir));
+        raise Exception("Output write permissions denied: " + str(WriteDir))
     nifti_paths = data
     # if template_dict['standalone']:
     #     computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
@@ -354,7 +360,7 @@ def data_parser(args):
     #         **template_dict)
     #     sys.stdout.write(computation_output)
     # We are only concerned with pre-processing
-    covariates = args['input']['covariates'];
+    covariates = args['input']['covariates']
 
     computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
         data=nifti_paths,
@@ -375,7 +381,9 @@ def start(args):
     # args = json.loads(sys.stdin.read())
 
     # Parse args
-    args_parser(args)
+    args_output = args_parser(args)
+    if args_output is not None:
+        return args_output
 
     #Convert reorient params to mat file if they exist
     convert_reorientparams_save_to_mat_script()

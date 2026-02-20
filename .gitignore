@@ -1,2 +1,16 @@
 .DS_Store
 *.DS_Store
+*.swp
+*.swo
+*.tmp
+*.log
+__pycache__/
+*.pyc
+
+# Local simulator inputs/outputs and large artifacts
+test/output/
+test/output.zip
+test/input/local0/simulatorRun/*.zip
+test/input/local0/simulatorRun/*.b
+test/input/local0/simulatorRun/mosquitto.conf
+test/input/local0/simulatorRun/pipelineSpec*.json

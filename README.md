@@ -94,3 +94,10 @@ For standalone vbm options, use test/inputspec_vbm_standalone_all_options.json a
 
 The optional params info is detailed in vbm optional params description.xlsx
 Type of info. available is : Name	Label	Description	Json data type	Algorithm dev type for inner processing	Default value	Range (if applicable)	Step increments	pre=processing step
+
+## Output comparison helper
+Use `compare_outputs.py` to compare two output archives during refactors.
+It ignores macOS metadata files and tolerates `.mat` binary drift by default.
+
+Example:
+`python3 compare_outputs.py test/output.zip test/output/local0/simulatorRun/vbm_outputs.zip --strip-prefix output/local0/simulatorRun/vbm_outputs --ignore "output/local0/simulatorRun/vbm_outputs.zip" --ignore "output/local0/simulatorRun/wc1Re.png" --tolerate "*.mat"`
