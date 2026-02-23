@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-This layer runs the pre-processing VBM (Voxel Based Morphometry) pipeline based on the inputs from interface adapter layer
-This layer uses entities layer to modify nodes of the pipeline as needed
-"""
-import contextlib,traceback
+"""VBM preprocessing + regression pipeline orchestration."""
+
+import contextlib
+import traceback
+import base64
+import glob
+import math
+import os
+import shutil
+import sys
+import warnings
 
 
 @contextlib.contextmanager
@@ -20,6 +26,8 @@ def stdchannel_redirected(stdchannel, dest_filename):
             libraries.append('rt')
     """
 
+    oldstdchannel = None
+    dest_file = None
     try:
         oldstdchannel = os.dup(stdchannel.fileno())
         dest_file = open(dest_filename, 'w')
@@ -33,7 +41,6 @@ def stdchannel_redirected(stdchannel, dest_filename):
             dest_file.close()
 
 
-import sys, os, glob, shutil, math, base64, warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
 import ujson as json
@@ -45,12 +52,12 @@ import nipype.pipeline.engine as pe
 import numpy as np
 from nilearn import plotting
 
-#Import afni interface to perform resampling
+# Import AFNI interface to perform resampling.
 from nipype.interfaces import afni
 
 from . import vbm_entities_layer
 
-#Stop printing nipype.workflow info to stdout
+# Stop printing nipype.workflow info to stdout.
 from nipype import logging
 logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
@@ -141,7 +148,7 @@ def remove_tmp_files():
         os.remove(os.getcwd() + '/pyscript.m')
 
 
-def write_readme_files(write_dir='', data_type=None,log=None, **template_dict):
+def write_readme_files(write_dir='', data_type=None, log=None, **template_dict):
     """This function writes readme files"""
 
     # Write a text file with info. on each of the output nifti files
@@ -224,8 +231,8 @@ def get_corr(segmented_file, write_dir, sub_id, **template_dict):
         fp.write("%3.2f\n" % (covalue))
         fp.close()
 
-    #Flag subjects with <0.90 correlation value
-    if round(covalue,2) < template_dict['correlation_value']:
+    # Flag subjects with <0.90 correlation value.
+    if round(covalue, 2) < template_dict['correlation_value']:
         with open(
                 os.path.join(write_dir, template_dict['qa_flagged_filename']),
                 'w') as fp:
@@ -440,7 +447,7 @@ def create_workflow_input(source, target, source_output, target_input):
     return (source, target, [(source_output, target_input)])
 
 
-def smooth_images(write_dir,**template_dict):
+def smooth_images(write_dir, **template_dict):
     """This function runs smoothing on input images. Ex: modulated images"""
     from nipype.interfaces import spm
     from nipype.interfaces.io import DataSink
@@ -467,8 +474,8 @@ def run_pipeline(write_dir,
                  data_type=None,
                  **template_dict):
     """This function runs pipeline"""
-    unwanted_indexes=list() # list to store indices of subjects which do not pass QA
-    outputDirectory=write_dir
+    unwanted_indexes = list()  # List of subject indices that do not pass QA.
+    output_directory = write_dir
     id = 0  # id for assigning sub-id incase of nifti files in txt format
     loop_counter = 0  # loop counter
     count_success = 0  # variable for counting how many subjects were successfully run
@@ -554,7 +561,7 @@ def run_pipeline(write_dir,
 
                 # Smooth modulated images from segmentation node spm.Smooth()
                 smooth_images(
-                    os.path.join(vbm_out, template_dict['vbm_output_dirname']),**template_dict)
+                    os.path.join(vbm_out, template_dict['vbm_output_dirname']), **template_dict)
 
                 # Calculate correlation coefficient of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(
@@ -604,12 +611,13 @@ def run_pipeline(write_dir,
                                                                   template_dict['regression_resample_voxel_size'],
                                                                   template_dict['regression_resample_method'])
 
-            if round(covalue,2) < template_dict['correlation_value']: unwanted_indexes.append(loop_counter)
+            if round(covalue, 2) < template_dict['correlation_value']:
+                unwanted_indexes.append(loop_counter)
 
-            regression_resampled_file=glob.glob(os.path.join(regression_input_dir,sub_id + session + '_' + template_dict['regression_file_input_type'] + '.nii'))[0]
+            regression_resampled_file = glob.glob(os.path.join(regression_input_dir, sub_id + session + '_' + template_dict['regression_file_input_type'] + '.nii'))[0]
 
-            template_dict['covariates'][0][0][loop_counter][0] = (regression_resampled_file).replace(outputDirectory+'/','')
-            template_dict['regression_data'][0][loop_counter-1] = (regression_resampled_file).replace(outputDirectory + '/','')
+            template_dict['covariates'][0][0][loop_counter][0] = (regression_resampled_file).replace(output_directory + '/', '')
+            template_dict['regression_data'][0][loop_counter - 1] = (regression_resampled_file).replace(output_directory + '/', '')
 
         finally:
             remove_tmp_files()
@@ -622,7 +630,7 @@ def run_pipeline(write_dir,
             os.path.join(
                 os.path.dirname(write_dir),
                 template_dict['display_image_name'])):
-        #Zip output files
+        # Zip output files.
         shutil.make_archive(
             os.path.join(
                 os.path.dirname(write_dir), template_dict['output_zip_dir']),
@@ -632,7 +640,7 @@ def run_pipeline(write_dir,
         download_outputs_path = write_dir + '.zip'
 
 
-        output_message = "VBM preprocessing completed. Download zipped output file here:" +download_outputs_path+" " +str(
+        output_message = "VBM preprocessing completed. Download zipped output file here:" + download_outputs_path + " " + str(
             count_success) + "/" + str(
                 len(smri_data)
             ) + " subjects completed successfully." + template_dict[
@@ -660,11 +668,11 @@ def run_pipeline(write_dir,
         # Write readme files
         write_readme_files(write_dir, data_type, output_message, **template_dict)
 
-        if preprocessed_percentage>template_dict['qc_threshold']:
+        if preprocessed_percentage > template_dict['qc_threshold']:
             return {
                 "output": {
-                    "covariates":template_dict['covariates'],
-                    "data":template_dict['regression_data']
+                    "covariates": template_dict['covariates'],
+                    "data": template_dict['regression_data']
                 },
                 "cache": {},
                 "success": True

@@ -1,58 +1,48 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-This layer runs the pre-processing VBM (Voxel Based Morphometry) pipeline based on the inputs from interface adapter layer
-This layer uses entities layer to modify nodes of the pipeline as needed
-"""
+"""VBM standalone preprocessing pipeline orchestration."""
+
 import contextlib
-import re
-from . import vbm_spm12_file_output
-
-
-@contextlib.contextmanager
-def stdchannel_redirected(stdchannel, dest_filename):
-    """
-    A context manager to temporarily redirect stdout or stderr
-
-    e.g.:
-
-
-    with stdchannel_redirected(sys.stderr, os.devnull):
-        if compiler.has_function('clock_gettime', libraries=['rt']):
-            libraries.append('rt')
-    """
-
-    try:
-        oldstdchannel = os.dup(stdchannel.fileno())
-        dest_file = open(dest_filename, 'w')
-        os.dup2(dest_file.fileno(), stdchannel.fileno())
-
-        yield
-    finally:
-        if oldstdchannel is not None:
-            os.dup2(oldstdchannel, stdchannel.fileno())
-        if dest_file is not None:
-            dest_file.close()
-
-
-import sys, os, glob, shutil, math, base64, warnings
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore")
-import ujson as json
-
-
+import base64
+import glob
+import math
+import os
+import shutil
+import sys
+import warnings
 
 import nibabel as nib
 import nipype.pipeline.engine as pe
 import numpy as np
 from nilearn import plotting
 
-from . import vbm_entities_layer
+from . import vbm_entities_layer, vbm_spm12_file_output
 from .vbm_io_utils import remove_tmp_files, write_readme_files
 
-#Stop printing nipype.workflow info to stdout
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore")
+
+# Stop printing nipype.workflow info to stdout.
 from nipype import logging
+
 logging.getLogger('nipype.workflow').setLevel('CRITICAL')
+
+
+@contextlib.contextmanager
+def stdchannel_redirected(stdchannel, dest_filename):
+    """Temporarily redirect stdout or stderr."""
+    oldstdchannel = None
+    dest_file = None
+    try:
+        oldstdchannel = os.dup(stdchannel.fileno())
+        dest_file = open(dest_filename, 'w')
+        os.dup2(dest_file.fileno(), stdchannel.fileno())
+        yield
+    finally:
+        if oldstdchannel is not None:
+            os.dup2(oldstdchannel, stdchannel.fileno())
+        if dest_file is not None:
+            dest_file.close()
 
 
 def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_dict):
@@ -83,34 +73,30 @@ def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_
             After setting up the pipeline here , the pipeline is run with run_pipeline function
 
         """
-        # Create pipeline nodes from vbm_entities_layer.py and pass them run_pipeline function
-    [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(
-            **template_dict)
+    [reorient, datasink, vbm_preprocess] = create_pipeline_nodes(**template_dict)
 
     if data_type == 'nifti':
-            # Runs the pipeline on each nifti file serially
-            smri_data = data
-            return run_pipeline(
-                write_dir,
-                smri_data,
-                reorient,
-                datasink,
-                vbm_preprocess,
-                covars,
-                data_type='nifti',
-                **template_dict)
+        smri_data = data
+        return run_pipeline(
+            write_dir,
+            smri_data,
+            reorient,
+            datasink,
+            vbm_preprocess,
+            covars,
+            data_type='nifti',
+            **template_dict)
     elif data_type == 'dicoms':
-            # Runs the pipeline on each nifti file serially
-            smri_data = data
-            return run_pipeline(
-                write_dir,
-                smri_data,
-                reorient,
-                datasink,
-                vbm_preprocess,
-                covars,
-                data_type='dicoms',
-                **template_dict)
+        smri_data = data
+        return run_pipeline(
+            write_dir,
+            smri_data,
+            reorient,
+            datasink,
+            vbm_preprocess,
+            covars,
+            data_type='dicoms',
+            **template_dict)
 
 
 
@@ -167,8 +153,8 @@ def get_corr(segmented_file, write_dir, sub_id, **template_dict):
         fp.write("%3.2f\n" % (covalue))
         fp.close()
 
-    #Flag subjects with <0.90 correlation value
-    if round(covalue,2) < template_dict['correlation_value']:
+    # Flag subjects with <0.90 correlation value.
+    if round(covalue, 2) < template_dict['correlation_value']:
         with open(
                 os.path.join(write_dir, template_dict['qa_flagged_filename']),
                 'w') as fp:
@@ -349,7 +335,7 @@ def create_workflow_input(source, target, source_output, target_input):
     return (source, target, [(source_output, target_input)])
 
 
-def smooth_images(write_dir,**template_dict):
+def smooth_images(write_dir, **template_dict):
     """This function runs smoothing on input images. Ex: modulated images"""
     from nipype.interfaces import spm
     from nipype.interfaces.io import DataSink
@@ -378,21 +364,14 @@ def run_pipeline(write_dir,
                  **template_dict):
     """This function runs pipeline"""
 
-    id = 0  # id for assigning sub-id incase of nifti files in txt format
-    loop_counter = 0  # loop counter
-    count_success = 0  # variable for counting how many subjects were successfully run
-    write_dir = write_dir + '/' + template_dict[
-        'output_zip_dir']  # Store outputs in this directory for zipping the directory
-    error_log = dict()  # dict for storing error log
+    count_success = 0
+    write_dir = write_dir + '/' + template_dict['output_zip_dir']
+    error_log = dict()
 
     for each_sub in smri_data:
-        loop_counter += 1
-        sub_id=(each_sub.split('/')[-1]).split('.')[0]
+        sub_id = (each_sub.split('/')[-1]).split('.')[0]
 
         try:
-
-            # Assign subject,session id and input nifti file for reorienation node
-
             if data_type == 'nifti':
                 session = ''
                 n1_img = nib.load(each_sub)
@@ -402,7 +381,7 @@ def run_pipeline(write_dir,
                 vbm_out = os.path.join(write_dir, sub_id, session, 'anat')
                 os.makedirs(vbm_out, exist_ok=True)
 
-                ## This code runs the dicom to nifti conversion here
+                # Run DICOM to NIfTI conversion.
                 from nipype.interfaces.spm.utils import DicomImport
                 import nipype.pipeline.engine as pe
                 dcm_nii_convert = pe.Node(
@@ -414,17 +393,11 @@ def run_pipeline(write_dir,
                     dcm_nii_convert.run()
                 n1_img = nib.load(glob.glob(os.path.join(vbm_out, '*.nii'))[0])
 
-            # Directory in which vbm outputs will be written
             vbm_out = os.path.join(write_dir, sub_id, session, 'anat')
-
-            # Create output dir for sub_id
             os.makedirs(vbm_out, exist_ok=True)
 
             if n1_img:
-                """
-                Save nifti file from input data into output directory only if data_type !=dicoms because the dcm_nii_convert in the previous
-                step saves the nifti file to output directory
-                 """
+                # DICOM branch already writes NIfTI output.
                 if data_type != 'dicoms':
                     nib.save(n1_img, os.path.join(vbm_out, sub_id))
 
@@ -449,7 +422,7 @@ def run_pipeline(write_dir,
 
                 # Smooth modulated images from segmentation node spm.Smooth()
                 smooth_images(
-                    os.path.join(vbm_out, template_dict['vbm_output_dirname']),**template_dict)
+                    os.path.join(vbm_out, template_dict['vbm_output_dirname']), **template_dict)
 
                 # Calculate correlation coefficient of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(
@@ -467,15 +440,10 @@ def run_pipeline(write_dir,
                     label, **template_dict)
 
         except Exception as e:
-            # If the above code fails for any reason update the error log for the subject id
-            # ex: the nifti file is not a nifti file
-            # the input file is not a brian scan
             error_log.update({sub_id: str(e)})
             continue
 
         else:
-
-            # If the try block succeeds, increase the  success count and save the wc1*nii as wc1.png
             count_success = count_success + 1
 
             if count_success == 1:
@@ -493,14 +461,11 @@ def run_pipeline(write_dir,
             os.path.join(
                 os.path.dirname(write_dir),
                 template_dict['display_image_name'])):
-        #Zip output files
+        # Zip output files.
         shutil.make_archive(
             os.path.join(
                 os.path.dirname(write_dir), template_dict['output_zip_dir']),
             'zip', write_dir)
-
-        #Remove vbm_outputs directory if needed
-        #shutil.rmtree(write_dir, ignore_errors=True)
 
         download_outputs_path = write_dir + '.zip'
 
@@ -512,7 +477,6 @@ def run_pipeline(write_dir,
 
         preprocessed_percentage = (count_success / len(smri_data)) * 100
 
-        # If preprocessed_percentage<=template_dict['qc_threshold'] output qa warning
         if os.path.isfile(
                 os.path.join(write_dir, template_dict['qa_flagged_filename'])):
             qa_percentage = (len(
@@ -529,7 +493,6 @@ def run_pipeline(write_dir,
         if bool(error_log):
             output_message = output_message + " Error log:" + str(error_log)
 
-        # Convert wc1*.png
         with open(
                 os.path.join(
                     os.path.dirname(write_dir),
@@ -547,7 +510,6 @@ def run_pipeline(write_dir,
             "success": True
         }
     else:
-        # If the last file wc1*.png is not created for some reason in pre-processing
         return {
             "output": {
                 "message": " Error log:" + str(error_log)
