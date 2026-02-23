@@ -16,49 +16,12 @@ BIDS_DIR contains bids data
 success=True means program finished execution , despite the success or failure of the code
 This is to indicate to coinstac that program finished execution
 """
-import contextlib
 import os
 import sys
-import traceback
 import warnings
-
-
-@contextlib.contextmanager
-def stdchannel_redirected(stdchannel, dest_filename):
-    """
-    A context manager to temporarily redirect stdout or stderr
-
-    e.g.:
-
-
-    with stdchannel_redirected(sys.stderr, os.devnull):
-        if compiler.has_function('clock_gettime', libraries=['rt']):
-            libraries.append('rt')
-    """
-
-    oldstdchannel = None
-    dest_file = None
-    try:
-        oldstdchannel = os.dup(stdchannel.fileno())
-        dest_file = open(dest_filename, 'w')
-        os.dup2(dest_file.fileno(), stdchannel.fileno())
-
-        yield
-    finally:
-        if oldstdchannel is not None:
-            os.dup2(oldstdchannel, stdchannel.fileno())
-        if dest_file is not None:
-            dest_file.close()
-
-
-import ujson as json
-import numpy as np, scipy.io, spm_matrix as s
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
-# Load Nipype spm interface #
-from nipype.interfaces import spm
-import vbm_use_cases_layer,vbm_standalone_use_cases_layer
 
 #Stop printing nipype.workflow info to stdout
 from nipype import logging
@@ -67,6 +30,12 @@ logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 # Store all paths/options/output names in a single config dictionary.
 from vbm_config import template_dict
 from vbm_args import args_parser
+from vbm_data import data_parser
+from vbm_runtime import (
+    convert_reorientparams_save_to_mat_script,
+    software_check,
+    stdchannel_redirected,
+)
 """
 More info. on keys in template_dict
 
@@ -98,89 +67,10 @@ json output description
                     "download_outputs"-Zipped directory where outputs are stored
                     "display"-base64 encoded string of segmented gray matter normalized output nifti
 """
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore")
-
-
-
-def software_check():
-    """This function returns the spm standalone version installed inside the docker
-    """
-    spm.SPMCommand.set_mlab_paths(
-        matlab_cmd=template_dict['matlab_cmd'], use_mcr=True)
-    return (spm.SPMCommand().version)
-
-def convert_reorientparams_save_to_mat_script():
-    try:
-        pi = 22 / 7
-        scipy.io.savemat('/computation/transform.mat',
-                         mdict={'M': np.around(s.spm_matrix([template_dict['options_reorient_params_x_mm'],
-                                                             template_dict['options_reorient_params_y_mm'],
-                                                             template_dict['options_reorient_params_z_mm'],
-                                                             template_dict['options_reorient_params_pitch'] * (
-                                                                         pi / 180),
-                                                             template_dict['options_reorient_params_roll'] * (pi / 180),
-                                                             template_dict['options_reorient_params_yaw'] * (pi / 180),
-                                                             template_dict['options_reorient_params_x_scaling'],
-                                                             template_dict['options_reorient_params_y_scaling'],
-                                                             template_dict['options_reorient_params_z_scaling'],
-                                                             template_dict['options_reorient_params_x_affine'],
-                                                             template_dict['options_reorient_params_y_affine'],
-                                                             template_dict['options_reorient_params_z_affine']], 1),
-                                               decimals=4)[0]})
-    except Exception as e:
-        sys.stderr.write('Unable to convert reorientation params to transform.mat Error_log:'+str(e)+str(traceback.format_exc()))
-
-
-def data_parser(args):
-    """ This function parses the type of data i.e BIDS, nifti files or Dicoms
-    and passes them to vbm_use_cases_layer.py
-    """
-    # if template_dict['standalone']:
-    #     data = [args['state']['baseDirectory'] + '/' + file_names for file_names in args['input']['site_data']]
-    # else:
-    #     data = [args['state']['baseDirectory'] + '/' + subject[0] for subject in args['input']['covariates'][0][0][1:]]
-    # We are only concerned with pre-processing
-    data = [args['state']['baseDirectory'] + '/' + file_names for file_names in args['input']['covariates']]
-
-    WriteDir = args['state']['outputDirectory']
-
-    # Check if data has nifti files
-    for x in data:
-        if not os.path.isfile(x):
-            raise Exception("File does not exist or can't be read: " + str(x));
-    if not os.access(WriteDir, os.W_OK):
-        raise Exception("Output write permissions denied: " + str(WriteDir))
-    nifti_paths = data
-    # if template_dict['standalone']:
-    #     computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
-    #         data=nifti_paths,
-    #         write_dir=WriteDir,
-    #         data_type='nifti',
-    #         **template_dict)
-    #     sys.stdout.write(computation_output)
-    # else:
-    #     computation_output = vbm_use_cases_layer.setup_pipeline(
-    #         data=nifti_paths,
-    #         write_dir=WriteDir,
-    #         data_type='nifti',
-    #         **template_dict)
-    #     sys.stdout.write(computation_output)
-    # We are only concerned with pre-processing
-    covariates = args['input']['covariates']
-
-    computation_output = vbm_standalone_use_cases_layer.setup_pipeline(
-        data=nifti_paths,
-        write_dir=WriteDir,
-        covars=covariates,
-        data_type='nifti',
-        **template_dict)
-    return computation_output
-
 def start(args):
     # Check if spm is running
     with stdchannel_redirected(sys.stderr, os.devnull):
-        spm_check = software_check()
+        spm_check = software_check(template_dict)
     if spm_check != template_dict['spm_version']:
         raise EnvironmentError("spm unable to start in vbm docker")
 
@@ -193,7 +83,7 @@ def start(args):
         return args_output
 
     #Convert reorient params to mat file if they exist
-    convert_reorientparams_save_to_mat_script()
+    convert_reorientparams_save_to_mat_script(template_dict)
 
     # Parse input data and run the code
-    return data_parser(args)
+    return data_parser(args, template_dict)
