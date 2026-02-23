@@ -1,10 +1,17 @@
 import os
 
-import vbm_standalone_use_cases_layer
+from . import vbm_standalone_use_cases_layer
 
 
 def data_parser(args, template_dict):
     """Parse input data and run preprocessing pipeline."""
+    if 'state' not in args or 'input' not in args:
+        raise ValueError("Invalid args: missing 'state' or 'input'.")
+    if 'baseDirectory' not in args['state'] or 'outputDirectory' not in args['state']:
+        raise ValueError("Invalid args.state: missing 'baseDirectory' or 'outputDirectory'.")
+    if 'covariates' not in args['input']:
+        raise ValueError("Invalid args.input: missing 'covariates'.")
+
     # We are only concerned with pre-processing.
     base_dir = args['state']['baseDirectory']
     covariates = args['input']['covariates']

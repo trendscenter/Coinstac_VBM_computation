@@ -5,6 +5,9 @@ import nibabel as nib
 
 def args_parser(args, template_dict):
     """Extract options from input arguments into template_dict."""
+    if 'input' not in args:
+        raise ValueError("Invalid args: missing 'input'.")
+
     input_args = args.get('input', {})
 
     if 'options_smoothing_x_mm' in input_args:

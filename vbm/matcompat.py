@@ -23,7 +23,7 @@ __revision__ = "$Id$"
 
 import numpy as np
 import scipy
-import matcompat
+from . import matcompat
 
 # if available import pylab (from matlibplot)
 try:

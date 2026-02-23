@@ -6,7 +6,7 @@ This layer uses entities layer to modify nodes of the pipeline as needed
 """
 import contextlib
 import re
-import vbm_spm12_file_output
+from . import vbm_spm12_file_output
 
 
 @contextlib.contextmanager
@@ -47,7 +47,8 @@ import nipype.pipeline.engine as pe
 import numpy as np
 from nilearn import plotting
 
-import vbm_entities_layer
+from . import vbm_entities_layer
+from .vbm_io_utils import remove_tmp_files, write_readme_files
 
 #Stop printing nipype.workflow info to stdout
 from nipype import logging
@@ -111,51 +112,6 @@ def setup_pipeline(data='', write_dir='', covars='', data_type=None, **template_
                 data_type='dicoms',
                 **template_dict)
 
-
-
-def remove_tmp_files():
-    """this function removes any tmp files in the docker"""
-
-    # for a in glob.glob('/var/tmp/*'):
-    #     os.remove(a)
-
-    # for b in glob.glob(os.getcwd() + '/crash*'):
-    #     os.remove(b)
-
-    for c in glob.glob(os.getcwd() + '/tmp*'):
-        shutil.rmtree(c, ignore_errors=True)
-
-    # for d in glob.glob(os.getcwd() + '/__pycache__'):
-    #     shutil.rmtree(d, ignore_errors=True)
-
-    # shutil.rmtree(os.getcwd() + '/vbm_preprocess', ignore_errors=True)
-
-    # if os.path.exists(os.getcwd() + '/pyscript.m'):
-    #     os.remove(os.getcwd() + '/pyscript.m')
-
-
-def write_readme_files(write_dir='', data_type=None, **template_dict):
-    """This function writes readme files"""
-
-    # Write a text file with info. on each of the output nifti files
-    if data_type == 'nifti':
-        with open(
-                os.path.join(write_dir, template_dict['outputs_manual_name']),
-                'w') as fp:
-            fp.write(template_dict['nifti_outputs_manual_content'])
-            fp.close()
-    elif data_type == 'dicoms':
-        with open(
-                os.path.join(write_dir, template_dict['outputs_manual_name']),
-                'w') as fp:
-            fp.write(template_dict['dicoms_outputs_manual_content'])
-            fp.close()
-
-    # Write a text file with info. on quality control correlation coefficent
-    with open(os.path.join(write_dir, template_dict['qc_readme_name']),
-              'w') as fp:
-        fp.write(template_dict['qc_readme_content'])
-        fp.close()
 
 
 def nii_to_image_converter(write_dir, label, **template_dict):

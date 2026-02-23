@@ -48,7 +48,7 @@ from nilearn import plotting
 #Import afni interface to perform resampling
 from nipype.interfaces import afni
 
-import vbm_entities_layer
+from . import vbm_entities_layer
 
 #Stop printing nipype.workflow info to stdout
 from nipype import logging

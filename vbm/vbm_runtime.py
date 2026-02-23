@@ -7,7 +7,7 @@ import traceback
 
 import numpy as np
 import scipy.io
-import spm_matrix as s
+from . import spm_matrix as s
 from nipype.interfaces import spm
 
 
