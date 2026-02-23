@@ -52,7 +52,6 @@ def stdchannel_redirected(stdchannel, dest_filename):
 
 
 import ujson as json
-import nibabel as nib
 import numpy as np, scipy.io, spm_matrix as s
 
 with warnings.catch_warnings():
@@ -65,115 +64,9 @@ import vbm_use_cases_layer,vbm_standalone_use_cases_layer
 from nipype import logging
 logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
-#Create a dictionary to store all paths to softwares,templates & store parameters, names of output files
-
-template_dict = {
-    'spm_version':
-    '12.7771',
-    'matlab_cmd':
-    '/opt/spm12/run_spm12.sh /opt/mcr/R2022b script',
-    'spm_path':
-    '/opt/spm12/fsroot',
-    'tpm_path':
-    '/opt/spm12/fsroot/spm/spm12/tpm/TPM.nii',
-    'transf_mat_path':
-    os.path.join('/computation', 'transform.mat'),
-    'scan_type':
-    'T1w',
-    'standalone':False,
-    'covariates':list(),
-    'regression_data':list(),
-    'regression_file_input_type':
-        'swc1',
-    'regression_dir_name':
-        'regression_input_files',
-    'regression_file':
-        'swc1Re.nii',
-    'regression_resample_voxel_size':
-        None,
-    'regression_resample_method':
-    'Li',
-    'FWHM_SMOOTH': [10.0, 10.0, 10.0],
-    'bounding_box':
-    '',
-    'options_reorient_params_x_mm': 0,
-    'options_reorient_params_y_mm': 0,
-    'options_reorient_params_z_mm': 0,
-    'options_reorient_params_pitch': 0,
-    'options_reorient_params_roll': 0,
-    'options_reorient_params_yaw': 0,
-    'options_reorient_params_x_scaling': 1,
-    'options_reorient_params_y_scaling': 1,
-    'options_reorient_params_z_scaling': 1,
-    'options_reorient_params_x_affine': 0,
-    'options_reorient_params_y_affine': 0,
-    'options_reorient_params_z_affine': 0,
-    'BIAS_REGULARISATION':
-    0.0001,
-    'FWHM_GAUSSIAN_SMOOTH_BIAS':
-    60,
-    'affine_regularization': 'mni',
-    'warping_regularization': [0, 1e-3, 0.5, 0.05, 0.2],
-    'sampling_distance': 3.0,
-    'mrf_weighting':
-        1.0,
-    'cleanup':
-        1,
-    'implicit_masking':
-    False,
-    'correlation_value':
-    0.90,
-    'vbm_output_dirname':
-    'vbm_spm12',
-    'output_zip_dir':
-    'vbm_outputs',
-    'log_filename':
-    'vbm_log.txt',
-    'qa_flagged_filename':
-    'QA_flagged_subjects.txt',
-    'display_image_name':
-    'wc1Re.png',
-    'display_pngimage_name':
-    'Gray matter (Normalized)',
-    'cut_coords': (0, 0, 0),
-    'display_nifti':
-    'wc1Re.nii',
-    'qc_nifti':
-    'swc1*nii',
-    'vbm_append_string':
-    'vbm_prepoc',
-    'qc_threshold':
-    70,
-    'vbm_qc_filename':
-    'vbm_corr_value.txt',
-    'outputs_manual_name':
-    'outputs_description.txt',
-    'coinstac_display_info':
-    'Please read outputs_description.txt for description of pre-processed output files and quality_control_readme.txt for quality control measurement.'
-    'These files are placed under the pre-processed data.',
-    'flag_warning':
-    ' QC warning: Atleast 30% of input data did not pass QA or could not be pre-processed, please check the data, vbm_log.txt and QA_flagged_subjects.txt',
-    'bids_outputs_manual_content':
-    "Prefixes descriptions for segmented images:c1-Gray matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
-    "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) Default:[10 10 10]\nFor more info. please refer to spm12 manual here: "
-    "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
-    'nifti_outputs_manual_content':
-    "subID-1,subID-2,subID-* denotes each nifti file with respect to the order of the nifti paths given"
-    "\nPrefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
-    "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
-    "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
-    'dicoms_outputs_manual_content':
-    "subID-1,subID-2,subID-* denotes each session's dicom directory with respect to the order of the dicom directory paths given"
-    "\nPrefixes descriptions for segmented images:c1-Grey matter,c2-White matter,c3-Cerebro spinal fluid,c4-Bone,c5-Soft tissue,c6-Air(background)"
-    "\nw-Normalized\nm-Modulated\ns-Smoothed with fwhm(mm) [10 10 10]\nFor more info. please refer to spm12 manual here: "
-    "http://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf and release notes here: http://www.fil.ion.ucl.ac.uk/spm/software/spm12/SPM12_Release_Notes.pdf",
-    'qc_readme_name':
-    'quality_control_readme.txt',
-    'qc_readme_content':
-    "In each subject's anat/vbm_spm12 directory,vbm_corr_value.txt gives the correlation value of the swc1*nii file with spm12 adult brain tissue probability maps (TPM.nii) file from SPM12 toolbox"
-    "\nIf your subjects are kids/adolescent, take this into considersation as correlation value may not pass threshold. For an adult study, its suggested that scans with correlation value <=0.91 "
-    "\nshould be manually looked into for possible reorientation to the ac-pc line. Subjects that do not pass this QA metric will be saved in vbm_outputs/QA_flagged_subjects.txt"
-}
+# Store all paths/options/output names in a single config dictionary.
+from vbm_config import template_dict
+from vbm_args import args_parser
 """
 More info. on keys in template_dict
 
@@ -239,92 +132,6 @@ def convert_reorientparams_save_to_mat_script():
         sys.stderr.write('Unable to convert reorientation params to transform.mat Error_log:'+str(e)+str(traceback.format_exc()))
 
 
-def args_parser(args):
-    """ This function extracts options from arguments
-    """
-    input_args = args.get('input', {})
-
-    if 'options_smoothing_x_mm' in input_args:
-         template_dict['FWHM_SMOOTH'][0]= float(input_args['options_smoothing_x_mm'])
-    if 'options_smoothing_y_mm' in input_args:
-         template_dict['FWHM_SMOOTH'][1]= float(input_args['options_smoothing_y_mm'])
-    if 'options_smoothing_z_mm' in input_args:
-        template_dict['FWHM_SMOOTH'][2] = float(input_args['options_smoothing_z_mm'])
-    if 'options_smoothing_implicit_masking' in input_args:
-        template_dict['implicit_masking']=input_args['options_smoothing_implicit_masking']
-
-    if input_args.get('standalone'):
-        template_dict['standalone'] = input_args['standalone']
-    else:
-        template_dict['covariates'] = input_args.get('covariates', [])
-        template_dict['regression_data'] = input_args.get('data', [])
-        #template_dict['regression_file_input_type'] = args['input']['regression_file_input_type']
-
-    if 'options_reorient_params_x_mm' in input_args:
-        template_dict['options_reorient_params_x_mm'] = float(input_args['options_reorient_params_x_mm'])
-    if 'options_reorient_params_y_mm' in input_args:
-        template_dict['options_reorient_params_y_mm'] = float(input_args['options_reorient_params_y_mm'])
-    if 'options_reorient_params_z_mm' in input_args:
-        template_dict['options_reorient_params_z_mm'] = float(input_args['options_reorient_params_z_mm'])
-    if 'options_reorient_params_pitch' in input_args:
-        template_dict['options_reorient_params_pitch'] = float((input_args['options_reorient_params_pitch']))
-    if 'options_reorient_params_roll' in input_args:
-        template_dict['options_reorient_params_roll'] = float((input_args['options_reorient_params_roll']))
-    if 'options_reorient_params_yaw' in input_args:
-        template_dict['options_reorient_params_yaw'] = float((input_args['options_reorient_params_yaw']))
-    if 'options_reorient_params_x_scaling' in input_args:
-        template_dict['options_reorient_params_x_scaling'] = float(input_args['options_reorient_params_x_scaling'])
-    if 'options_reorient_params_y_scaling' in input_args:
-        template_dict['options_reorient_params_y_scaling'] = float(input_args['options_reorient_params_y_scaling'])
-    if 'options_reorient_params_z_scaling' in input_args:
-        template_dict['options_reorient_params_z_scaling'] = float(input_args['options_reorient_params_z_scaling'])
-    if 'options_reorient_params_x_affine' in input_args:
-        template_dict['options_reorient_params_x_affine'] = float(input_args['options_reorient_params_x_affine'])
-    if 'options_reorient_params_y_affine' in input_args:
-        template_dict['options_reorient_params_y_affine'] = float(input_args['options_reorient_params_y_affine'])
-    if 'options_reorient_params_z_affine' in input_args:
-        template_dict['options_reorient_params_z_affine'] = float(input_args['options_reorient_params_z_affine'])
-
-    if 'options_BIAS_REGULARISATION' in input_args:
-        template_dict['BIAS_REGULARISATION']=float(input_args['options_BIAS_REGULARISATION'])
-
-    if 'options_FWHM_GAUSSIAN_SMOOTH_BIAS' in input_args:
-        template_dict['FWHM_GAUSSIAN_SMOOTH_BIAS']=input_args['options_FWHM_GAUSSIAN_SMOOTH_BIAS']
-
-    if 'options_affine_regularization' in input_args:
-        template_dict['affine_regularization']=input_args['options_affine_regularization']
-
-    if 'options_warping_regularization' in input_args:
-        if len(input_args['options_warping_regularization'])==5:
-            template_dict['warping_regularization']=input_args['options_warping_regularization']
-
-    if 'options_sampling_distance' in input_args:
-        template_dict['sampling_distance']=float(input_args['options_sampling_distance'])
-
-    if 'options_mrf_weighting' in input_args:
-        template_dict['mrf_weighting']=float(input_args['options_mrf_weighting'])
-
-    if 'options_cleanup' in input_args:
-        template_dict['cleanup']=int(input_args['options_cleanup'])
-
-    if 'regression_resample_voxel_size' in input_args:
-        template_dict['regression_resample_voxel_size']=tuple([float(input_args['regression_resample_voxel_size'])]*3)
-
-    if 'registration_template' in input_args:
-        if os.path.isfile(input_args['registration_template']) and (str(
-                ((nib.load(template_dict['tpm_path'])).shape)) == str(
-            ((nib.load(input_args['registration_template'])).shape))):
-            template_dict['tpm_path'] = input_args['registration_template']
-        else:
-            return {
-                    "output": {
-                        "message": "Non-standard Registration template "
-                    },
-                    "cache": {},
-                    "success": True
-                }
-
-
 def data_parser(args):
     """ This function parses the type of data i.e BIDS, nifti files or Dicoms
     and passes them to vbm_use_cases_layer.py
@@ -381,7 +188,7 @@ def start(args):
     # args = json.loads(sys.stdin.read())
 
     # Parse args
-    args_output = args_parser(args)
+    args_output = args_parser(args, template_dict)
     if args_output is not None:
         return args_output
 

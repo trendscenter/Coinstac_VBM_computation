@@ -101,3 +101,10 @@ It ignores macOS metadata files and tolerates `.mat` binary drift by default.
 
 Example:
 `python3 compare_outputs.py test/output.zip test/output/local0/simulatorRun/vbm_outputs.zip --strip-prefix output/local0/simulatorRun/vbm_outputs --ignore "output/local0/simulatorRun/vbm_outputs.zip" --ignore "output/local0/simulatorRun/wc1Re.png" --tolerate "*.mat"`
+
+## Full checkpoint regression
+Use `scripts/full_regression.sh` to run the full workflow in one command:
+clean output directory, build image, run simulator, and compare artifacts.
+
+Example:
+`scripts/full_regression.sh`
