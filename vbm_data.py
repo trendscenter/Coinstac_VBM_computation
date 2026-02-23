@@ -6,7 +6,9 @@ import vbm_standalone_use_cases_layer
 def data_parser(args, template_dict):
     """Parse input data and run preprocessing pipeline."""
     # We are only concerned with pre-processing.
-    data = [args['state']['baseDirectory'] + '/' + file_names for file_names in args['input']['covariates']]
+    base_dir = args['state']['baseDirectory']
+    covariates = args['input']['covariates']
+    data = [base_dir + '/' + file_name for file_name in covariates]
     write_dir = args['state']['outputDirectory']
 
     for path in data:
@@ -15,7 +17,6 @@ def data_parser(args, template_dict):
     if not os.access(write_dir, os.W_OK):
         raise Exception("Output write permissions denied: " + str(write_dir))
 
-    covariates = args['input']['covariates']
     return vbm_standalone_use_cases_layer.setup_pipeline(
         data=data,
         write_dir=write_dir,

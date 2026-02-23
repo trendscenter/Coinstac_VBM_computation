@@ -1,3 +1,5 @@
+"""Runtime helpers for SPM validation and transform generation."""
+
 import contextlib
 import os
 import sys
@@ -28,8 +30,7 @@ def stdchannel_redirected(stdchannel, dest_filename):
 
 def software_check(template_dict):
     """Return the SPM standalone version configured in the runtime."""
-    spm.SPMCommand.set_mlab_paths(
-        matlab_cmd=template_dict['matlab_cmd'], use_mcr=True)
+    spm.SPMCommand.set_mlab_paths(matlab_cmd=template_dict['matlab_cmd'], use_mcr=True)
     return spm.SPMCommand().version
 
 
@@ -38,24 +39,28 @@ def convert_reorientparams_save_to_mat_script(template_dict):
     try:
         pi = 22 / 7
         scipy.io.savemat(
-            '/computation/transform.mat',
+            template_dict['transf_mat_path'],
             mdict={
                 'M': np.around(
-                    s.spm_matrix([
-                        template_dict['options_reorient_params_x_mm'],
-                        template_dict['options_reorient_params_y_mm'],
-                        template_dict['options_reorient_params_z_mm'],
-                        template_dict['options_reorient_params_pitch'] * (pi / 180),
-                        template_dict['options_reorient_params_roll'] * (pi / 180),
-                        template_dict['options_reorient_params_yaw'] * (pi / 180),
-                        template_dict['options_reorient_params_x_scaling'],
-                        template_dict['options_reorient_params_y_scaling'],
-                        template_dict['options_reorient_params_z_scaling'],
-                        template_dict['options_reorient_params_x_affine'],
-                        template_dict['options_reorient_params_y_affine'],
-                        template_dict['options_reorient_params_z_affine'],
-                    ], 1),
-                    decimals=4)[0]
+                    s.spm_matrix(
+                        [
+                            template_dict['options_reorient_params_x_mm'],
+                            template_dict['options_reorient_params_y_mm'],
+                            template_dict['options_reorient_params_z_mm'],
+                            template_dict['options_reorient_params_pitch'] * (pi / 180),
+                            template_dict['options_reorient_params_roll'] * (pi / 180),
+                            template_dict['options_reorient_params_yaw'] * (pi / 180),
+                            template_dict['options_reorient_params_x_scaling'],
+                            template_dict['options_reorient_params_y_scaling'],
+                            template_dict['options_reorient_params_z_scaling'],
+                            template_dict['options_reorient_params_x_affine'],
+                            template_dict['options_reorient_params_y_affine'],
+                            template_dict['options_reorient_params_z_affine'],
+                        ],
+                        1,
+                    ),
+                    decimals=4,
+                )[0]
             })
     except Exception as e:
         sys.stderr.write(
