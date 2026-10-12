@@ -1,7 +1,5 @@
 """Runtime helpers for SPM validation and transform generation."""
 
-import contextlib
-import os
 import sys
 import traceback
 
@@ -9,23 +7,7 @@ import numpy as np
 import scipy.io
 from . import spm_matrix as s
 from nipype.interfaces import spm
-
-
-@contextlib.contextmanager
-def stdchannel_redirected(stdchannel, dest_filename):
-    """Temporarily redirect stdout/stderr to a destination file."""
-    oldstdchannel = None
-    dest_file = None
-    try:
-        oldstdchannel = os.dup(stdchannel.fileno())
-        dest_file = open(dest_filename, 'w')
-        os.dup2(dest_file.fileno(), stdchannel.fileno())
-        yield
-    finally:
-        if oldstdchannel is not None:
-            os.dup2(oldstdchannel, stdchannel.fileno())
-        if dest_file is not None:
-            dest_file.close()
+from .pipeline_common import stdchannel_redirected
 
 
 def software_check(template_dict):

@@ -10,6 +10,8 @@ __pycache__/
 # Local simulator inputs/outputs and large artifacts
 test/output/
 test/output.zip
+test/regression/
+test/runtime-build/
 test/input/local0/simulatorRun/*.zip
 test/input/local0/simulatorRun/*.b
 test/input/local0/simulatorRun/mosquitto.conf

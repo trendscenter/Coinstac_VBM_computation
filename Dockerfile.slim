@@ -1,0 +1,52 @@
+# First build the existing runtime once:
+# docker build --platform linux/amd64 -t coinstacteam/vbm_pre .
+# Then assemble a smaller runtime with identical MATLAB/SPM/Python packages:
+# docker build --platform linux/amd64 -f Dockerfile.slim -t coinstacteam/vbm_pre:slim .
+ARG RUNTIME_IMAGE=coinstacteam/vbm_pre
+FROM ${RUNTIME_IMAGE} AS installed
+ARG SELECT_SPM_PRODUCTS=0
+ARG STRIP_GPU_LIBS=0
+COPY scripts/select_runtime_products.py /tmp/select_runtime_products.py
+COPY scripts/prune_runtime_gpu.py /tmp/prune_runtime_gpu.py
+# The reference image remains untouched. Assemble a product-based subset in a
+# new directory, then use it as the source for the final runtime COPY.
+RUN if [ "$SELECT_SPM_PRODUCTS" = "1" ]; then \
+      python /tmp/select_runtime_products.py \
+        --source /opt/mcr/R2022b \
+        --requirements /opt/spm12/fsroot/.META/requiredMCRProducts.txt \
+        --destination /opt/selected-mcr/R2022b \
+      && rm -rf /opt/mcr \
+      && mv /opt/selected-mcr /opt/mcr; \
+    fi
+# Delete in the source stage, before COPY into the final image, so deleted
+# libraries are not retained in distributable image layers.
+RUN if [ "$STRIP_GPU_LIBS" = "1" ]; then python /tmp/prune_runtime_gpu.py /opt/mcr/R2022b; fi
+
+FROM python:3.8-slim-bookworm
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    libxext6 libxt6 libxmu6 libglu1-mesa libxrandr2 libgomp1 \
+    libglib2.0-0 libnss3 libasound2 libgbm1 libxrender1 libxcomposite1 \
+    libxcursor1 libxi6 libxdamage1 libxfixes3 libxinerama1 libxkbcommon0 \
+    libsm6 libice6 libfontconfig1 libfreetype6 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Copy installed software only: exclude downloaders, compilers, headers, and
+# package-manager caches. GPU library removal is opt-in; retain SPM's CTF.
+COPY --from=installed /opt/mcr /opt/mcr
+COPY --from=installed /opt/spm12 /opt/spm12
+COPY --from=installed /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
+# Preserve the plotting fonts to avoid PNG differences.
+COPY --from=installed /usr/share/fonts /usr/share/fonts
+COPY --from=installed /etc/fonts /etc/fonts
+
+ENV MATLAB_VERSION=R2022b MCR_VERSION=R2022b MCR_UPDATE=9 \
+    SPM_VERSION=12 SPM_REVISION=r7771 MCR_INHIBIT_CTF_LOCK=1 SPM_HTML_BROWSER=0
+ENV LD_LIBRARY_PATH=/opt/mcr/R2022b/runtime/glnxa64:/opt/mcr/R2022b/bin/glnxa64:/opt/mcr/R2022b/sys/os/glnxa64:/opt/mcr/R2022b/sys/opengl/lib/glnxa64:/opt/mcr/R2022b/extern/bin/glnxa64
+# Fail during the build if product selection breaks MATLAB/SPM startup.
+RUN /opt/spm12/run_spm12.sh /opt/mcr/R2022b function exit
+WORKDIR /computation
+COPY entry.py run_vbm.py preprocess.py transform.mat convert_to_mat_file_template.m /computation/
+COPY vbm /computation/vbm
+COPY preprocess.py /usr/local/lib/python3.8/site-packages/nipype/interfaces/spm/preprocess.py
+CMD ["python", "/computation/entry.py"]
