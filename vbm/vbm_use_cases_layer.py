@@ -1,43 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-This layer runs the pre-processing VBM (Voxel Based Morphometry) pipeline based on the inputs from interface adapter layer
-This layer uses entities layer to modify nodes of the pipeline as needed
-"""
-import contextlib,traceback
+"""VBM preprocessing + regression pipeline orchestration."""
+
+import traceback
+import base64
+import glob
+import math
+import os
+import shutil
+import sys
+import warnings
 
 
-@contextlib.contextmanager
-def stdchannel_redirected(stdchannel, dest_filename):
-    """
-    A context manager to temporarily redirect stdout or stderr
-
-    e.g.:
-
-
-    with stdchannel_redirected(sys.stderr, os.devnull):
-        if compiler.has_function('clock_gettime', libraries=['rt']):
-            libraries.append('rt')
-    """
-
-    try:
-        oldstdchannel = os.dup(stdchannel.fileno())
-        dest_file = open(dest_filename, 'w')
-        os.dup2(dest_file.fileno(), stdchannel.fileno())
-
-        yield
-    finally:
-        if oldstdchannel is not None:
-            os.dup2(oldstdchannel, stdchannel.fileno())
-        if dest_file is not None:
-            dest_file.close()
-
-
-import sys, os, glob, shutil, math, base64, warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
 import ujson as json
-
 
 
 import nibabel as nib
@@ -45,12 +22,14 @@ import nipype.pipeline.engine as pe
 import numpy as np
 from nilearn import plotting
 
-#Import afni interface to perform resampling
+# Import AFNI interface to perform resampling.
 from nipype.interfaces import afni
 
-import vbm_entities_layer
+from . import vbm_entities_layer
+from .pipeline_common import create_workflow_input, stdchannel_redirected
+from .pipeline_nodes import create_pipeline_nodes, smooth_images
 
-#Stop printing nipype.workflow info to stdout
+# Stop printing nipype.workflow info to stdout.
 from nipype import logging
 logging.getLogger('nipype.workflow').setLevel('CRITICAL')
 
@@ -141,7 +120,7 @@ def remove_tmp_files():
         os.remove(os.getcwd() + '/pyscript.m')
 
 
-def write_readme_files(write_dir='', data_type=None,log=None, **template_dict):
+def write_readme_files(write_dir='', data_type=None, log=None, **template_dict):
     """This function writes readme files"""
 
     # Write a text file with info. on each of the output nifti files
@@ -224,8 +203,8 @@ def get_corr(segmented_file, write_dir, sub_id, **template_dict):
         fp.write("%3.2f\n" % (covalue))
         fp.close()
 
-    #Flag subjects with <0.90 correlation value
-    if round(covalue,2) < template_dict['correlation_value']:
+    # Flag subjects with <0.90 correlation value.
+    if round(covalue, 2) < template_dict['correlation_value']:
         with open(
                 os.path.join(write_dir, template_dict['qa_flagged_filename']),
                 'w') as fp:
@@ -266,199 +245,6 @@ def resample_nifti_images(image_file, voxel_dimensions, resample_method):
     return os.path.join(os.path.dirname(image_file), new_file_name)
 
 
-
-def create_pipeline_nodes(**template_dict):
-    """This function creates and modifies nodes of the pipeline from entities layer with nipype
-    """
-
-    #  Reorientation node and settings #
-    reorient = vbm_entities_layer.Reorient(**template_dict)
-
-    #  Segementation Node and settings #
-    segment = vbm_entities_layer.Segment(**template_dict)
-
-    def create_tissue(tpm_path,
-                      tissue_id,
-                      write_native_maps,
-                      write_dartel_maps,
-                      write_unmodulated_maps,
-                      write_modulated_maps,
-                      num_gaussians=None):
-        """
-        tissue_id is tissue probability image for this class
-        1-grey matter
-        2-white matter
-        3-CSF
-        4-bone
-        5-soft tissues
-        6-air (background)
-
-        write_native_maps,write_dartel_maps- which maps to save [Native, DARTEL] - a tuple of two boolean
-        values
-        write_unmodulated_maps,z-which maps to save [Unmodulated, Modulated] - a tuple of two
-        boolean values
-
-        num_gaussians is the number of Gaussians used to represent the intensity distribution for each type of tissue and can be greater than one.
-        In other words, a tissue probability map may be shared by several clusters. The assumption of
-        a single Gaussian distribution for each class does not hold for a number of reasons.
-        Typical numbers of Gaussians could be 1 for grey matter, 1 for white matter, two for CSF, three for bone, four for other soft tissues and two for air (background).
-        """
-
-        NUM_gaussians = 1
-
-        if num_gaussians is not None:
-            num_gaussians = num_gaussians
-        else:
-            num_gaussians = NUM_gaussians
-        tissue_type = (tpm_path, tissue_id)
-        return (tissue_type, num_gaussians, (write_native_maps,
-                                             write_dartel_maps),
-                (write_unmodulated_maps, write_modulated_maps))
-
-    Tis1 = create_tissue(
-        tpm_path=template_dict['tpm_path'],
-        tissue_id=1,
-        num_gaussians=1,
-        write_native_maps=True,
-        write_dartel_maps=False,
-        write_unmodulated_maps=True,
-        write_modulated_maps=True,
-    )
-
-    Tis2 = create_tissue(
-        tpm_path=template_dict['tpm_path'],
-        tissue_id=2,
-        num_gaussians=1,
-        write_native_maps=True,
-        write_dartel_maps=False,
-        write_unmodulated_maps=True,
-        write_modulated_maps=True,
-    )
-
-    Tis3 = create_tissue(
-        tpm_path=template_dict['tpm_path'],
-        tissue_id=3,
-        num_gaussians=2,
-        write_native_maps=True,
-        write_dartel_maps=False,
-        write_unmodulated_maps=True,
-        write_modulated_maps=True,
-    )
-
-    Tis4 = create_tissue(
-        tpm_path=template_dict['tpm_path'],
-        tissue_id=4,
-        num_gaussians=3,
-        write_native_maps=True,
-        write_dartel_maps=False,
-        write_unmodulated_maps=True,
-        write_modulated_maps=True,
-    )
-
-    Tis5 = create_tissue(
-        tpm_path=template_dict['tpm_path'],
-        tissue_id=5,
-        num_gaussians=4,
-        write_native_maps=True,
-        write_dartel_maps=False,
-        write_unmodulated_maps=True,
-        write_modulated_maps=True,
-    )
-
-    Tis6 = create_tissue(
-        tpm_path=template_dict['tpm_path'],
-        tissue_id=6,
-        num_gaussians=2,
-        write_native_maps=True,
-        write_dartel_maps=False,
-        write_unmodulated_maps=True,
-        write_modulated_maps=True,
-    )
-    segment.node.inputs.tissues = [Tis1, Tis2, Tis3, Tis4, Tis5, Tis6]
-
-    # Lists normalized images
-    list_norm_images = vbm_entities_layer.List_Normalized_Images()
-
-    #  Smoothing Node & Settings #
-    smooth = vbm_entities_layer.Smooth(**template_dict)
-
-    #  Datsink Node that collects segmented, smoothed files and writes to temp_write_dir #
-    datasink = vbm_entities_layer.Datasink()
-
-    # Create the pipeline/workflow and connect the nodes created above #
-    vbm_preprocess = pe.Workflow(name="vbm_preprocess")
-
-    vbm_preprocess.connect([
-        create_workflow_input(
-            source=reorient.node,
-            target=segment.node,
-            source_output='out_file',
-            target_input='channel_files'),
-        create_workflow_input(
-            source=segment.node,
-            target=list_norm_images.node,
-            source_output='normalized_class_images',
-            target_input='normalized_class_images'),
-        create_workflow_input(
-            source=list_norm_images.node,
-            target=smooth.node,
-            source_output='list_norm_images',
-            target_input='in_files'),
-        create_workflow_input(
-            source=segment.node,
-            target=datasink.node,
-            source_output='modulated_class_images',
-            target_input=template_dict['vbm_output_dirname']),
-        create_workflow_input(
-            source=segment.node,
-            target=datasink.node,
-            source_output='native_class_images',
-            target_input=template_dict['vbm_output_dirname'] + '.@1'),
-        create_workflow_input(
-            source=segment.node,
-            target=datasink.node,
-            source_output='normalized_class_images',
-            target_input=template_dict['vbm_output_dirname'] + '.@2'),
-        create_workflow_input(
-            source=segment.node,
-            target=datasink.node,
-            source_output='transformation_mat',
-            target_input=template_dict['vbm_output_dirname'] + '.@3'),
-        create_workflow_input(
-            source=smooth.node,
-            target=datasink.node,
-            source_output='smoothed_files',
-            target_input=template_dict['vbm_output_dirname'] + '.@4')
-    ])
-    return [reorient, datasink, vbm_preprocess]
-
-
-def create_workflow_input(source, target, source_output, target_input):
-    """This function collects pipeline nodes and their connections
-    and returns them in appropriate format for nipype pipeline workflow
-    """
-    return (source, target, [(source_output, target_input)])
-
-
-def smooth_images(write_dir,**template_dict):
-    """This function runs smoothing on input images. Ex: modulated images"""
-    from nipype.interfaces import spm
-    from nipype.interfaces.io import DataSink
-    smooth = pe.Node(interface=spm.Smooth(), name='smooth')
-    smooth.inputs.paths = template_dict['spm_path']
-    smooth.inputs.implicit_masking = template_dict['implicit_masking']
-    smooth.inputs.in_files = glob.glob(os.path.join(write_dir, 'mwc*.nii'))
-    smooth.inputs.fwhm = template_dict['FWHM_SMOOTH']
-    vbm_smooth_modulated_images = pe.Workflow(
-        name="vbm_smooth_modulated_images")
-    datasink = pe.Node(interface=DataSink(), name='datasink')
-    datasink.inputs.base_directory = write_dir
-    vbm_smooth_modulated_images.connect([(smooth, datasink, [('smoothed_files',
-                                                              write_dir)])])
-    with stdchannel_redirected(sys.stderr, os.devnull):
-        vbm_smooth_modulated_images.run()
-
-
 def run_pipeline(write_dir,
                  smri_data,
                  reorient,
@@ -467,8 +253,8 @@ def run_pipeline(write_dir,
                  data_type=None,
                  **template_dict):
     """This function runs pipeline"""
-    unwanted_indexes=list() # list to store indices of subjects which do not pass QA
-    outputDirectory=write_dir
+    unwanted_indexes = list()  # List of subject indices that do not pass QA.
+    output_directory = write_dir
     id = 0  # id for assigning sub-id incase of nifti files in txt format
     loop_counter = 0  # loop counter
     count_success = 0  # variable for counting how many subjects were successfully run
@@ -482,8 +268,6 @@ def run_pipeline(write_dir,
     write_dir = write_dir + '/' + template_dict[
         'output_zip_dir']  # Store outputs in this directory for zipping the directory
     error_log = dict()  # dict for storing error log
-
-
 
 
     for each_sub in smri_data:
@@ -554,7 +338,7 @@ def run_pipeline(write_dir,
 
                 # Smooth modulated images from segmentation node spm.Smooth()
                 smooth_images(
-                    os.path.join(vbm_out, template_dict['vbm_output_dirname']),**template_dict)
+                    os.path.join(vbm_out, template_dict['vbm_output_dirname']), **template_dict)
 
                 # Calculate correlation coefficient of swc1*nii to SPM12 TPM.nii
                 segmented_file = glob.glob(
@@ -604,12 +388,13 @@ def run_pipeline(write_dir,
                                                                   template_dict['regression_resample_voxel_size'],
                                                                   template_dict['regression_resample_method'])
 
-            if round(covalue,2) < template_dict['correlation_value']: unwanted_indexes.append(loop_counter)
+            if round(covalue, 2) < template_dict['correlation_value']:
+                unwanted_indexes.append(loop_counter)
 
-            regression_resampled_file=glob.glob(os.path.join(regression_input_dir,sub_id + session + '_' + template_dict['regression_file_input_type'] + '.nii'))[0]
+            regression_resampled_file = glob.glob(os.path.join(regression_input_dir, sub_id + session + '_' + template_dict['regression_file_input_type'] + '.nii'))[0]
 
-            template_dict['covariates'][0][0][loop_counter][0] = (regression_resampled_file).replace(outputDirectory+'/','')
-            template_dict['regression_data'][0][loop_counter-1] = (regression_resampled_file).replace(outputDirectory + '/','')
+            template_dict['covariates'][0][0][loop_counter][0] = (regression_resampled_file).replace(output_directory + '/', '')
+            template_dict['regression_data'][0][loop_counter - 1] = (regression_resampled_file).replace(output_directory + '/', '')
 
         finally:
             remove_tmp_files()
@@ -622,7 +407,7 @@ def run_pipeline(write_dir,
             os.path.join(
                 os.path.dirname(write_dir),
                 template_dict['display_image_name'])):
-        #Zip output files
+        # Zip output files.
         shutil.make_archive(
             os.path.join(
                 os.path.dirname(write_dir), template_dict['output_zip_dir']),
@@ -632,7 +417,7 @@ def run_pipeline(write_dir,
         download_outputs_path = write_dir + '.zip'
 
 
-        output_message = "VBM preprocessing completed. Download zipped output file here:" +download_outputs_path+" " +str(
+        output_message = "VBM preprocessing completed. Download zipped output file here:" + download_outputs_path + " " + str(
             count_success) + "/" + str(
                 len(smri_data)
             ) + " subjects completed successfully." + template_dict[
@@ -660,11 +445,11 @@ def run_pipeline(write_dir,
         # Write readme files
         write_readme_files(write_dir, data_type, output_message, **template_dict)
 
-        if preprocessed_percentage>template_dict['qc_threshold']:
+        if preprocessed_percentage > template_dict['qc_threshold']:
             return {
                 "output": {
-                    "covariates":template_dict['covariates'],
-                    "data":template_dict['regression_data']
+                    "covariates": template_dict['covariates'],
+                    "data": template_dict['regression_data']
                 },
                 "cache": {},
                 "success": True
